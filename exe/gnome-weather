@@ -1,6 +1,11 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require "gnome_weather"
+# Entry point for the Ruby port of GNOME Weather.
+#
+# Upstream's src/app/main.ts does the same three things: pull in the bindings,
+# build the application object, and run it.
 
-GnomeWeather::Application.new.build.run
+require_relative '../lib/main'
+
+App.new.build.run
