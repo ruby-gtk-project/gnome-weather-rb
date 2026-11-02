@@ -1,15 +1,19 @@
 # gnome-weather-rb — upstream component inventory
 
 Survey of `origin/main` (GNOME Weather, GJS/TypeScript + GtkBuilder `.ui`)
-against `lib/` on the `ruby` branch. Nothing but the application scaffold
-exists on the port side yet, so every row below is a gap except where noted.
+against `lib/` on the `ruby` branch. Re-surveyed after the window, forecast
+pages and world model landed: the whole user-facing app is now present on the
+port side, and what is left is the out-of-window surface — geolocation, the
+shell integration object, the background service and its search provider —
+plus the `po/` catalogue.
 
 Upstream is a GJS app: each component is a `.ts` class **plus** the `.ui` file
 its `Template:` points at. The two halves union into one `lib/*.rb` file.
 
 Totals: **21 component units** (14 of them widgets), 1 menu model, 3
 stylesheets, 1 GSettings schema, 1 `po/` catalogue of 100 languages.
-Port side: 1 file, a placeholder.
+Port side: 23 files under `lib/`, ~8.4k lines. **17 of the 21 units present,
+4 absent** — all four of them non-widget.
 
 ---
 
@@ -17,11 +21,25 @@ Port side: 1 file, a placeholder.
 
 | File | What it is |
 |---|---|
-| `lib/gnome_weather.rb` | requires `gnome_weather/application` |
-| `lib/gnome_weather/application.rb` | scaffold `Application` — window + `Adwaita::StatusPage` saying the port is unwritten. No actions, no menu, no model |
+| `lib/gnome_weather.rb` | gem entry point; requires `main` |
+| `lib/main.rb` | `App` — the application object: actions, accels, model, styles, window (upstream `main.ts` + `application.ts`) |
+| `lib/window.rb` | `Window` — the two-page stack, both header bars, `win.about` / `win.refresh` |
+| `lib/primary_menu.rb`, `lib/about_dialog.rb` | the hamburger menu model, the About dialog |
+| `lib/weather_view.rb`, `lib/weather_widget.rb` | the city page shell and the weather page |
+| `lib/world_content_view.rb`, `lib/location_search_entry.rb`, `lib/location_row.rb` | the places popover, its search entry, one row |
+| `lib/hourly_forecast_box.rb`, `lib/hour_entry.rb` | hourly strip + its cell (incl. the cairo temperature spline) |
+| `lib/daily_forecast_box.rb`, `lib/day_entry.rb`, `lib/thermometer.rb` | daily strip, its cell + popover, the drawn thermometer |
+| `lib/world_model.rb`, `lib/settings.rb`, `lib/styles.rb`, `lib/util.rb` | the model, the settings store, the stylesheet, the helpers |
+| `lib/location.rb`, `lib/weather_info.rb`, `lib/weather_provider.rb` | **no upstream counterpart** — stand-ins for `GWeather.Location`, `GWeather.Info` and the provider fetch, because the GWeather typelib is not reachable from the Ruby bindings |
 | `lib/gnome/weather/rb/version.rb` | gem version |
 
-No window, no views, no model, no forecast widgets, no D-Bus services.
+Absent: `current_location_controller.rb`, `shell_integration.rb`,
+`background_service.rb`, `search_provider.rb`.
+
+Two port-side substitutions worth knowing before comparing anything:
+`Gtk::Application` instead of `Adwaita::Application` (the Adwaita binding is
+broken), and a JSON file under `XDG_CONFIG_HOME` instead of GSettings (no
+schema install step).
 
 ---
 
@@ -30,7 +48,7 @@ No window, no views, no model, no forecast widgets, no D-Bus services.
 Not a widget. Sets up gettext/format, defines the `getApp()` global, builds
 `WeatherApplication` and runs it through the GJS mainloop shim.
 
-→ `lib/main.rb` (launcher as one expression, per house style). **Absent.**
+→ folded into `lib/main.rb` alongside the application class. **Present.**
 
 ## src/app/application.ts — the application object
 
@@ -49,8 +67,11 @@ Note: `win.selection-mode` and `win.select-all` have accels but **no action is
 installed anywhere upstream** — dead accelerators. Reproduce the accels for
 parity, but do not invent the actions.
 
-→ `lib/gnome_weather/application.rb`. **Present but placeholder only** — none
-of the above exists.
+→ `lib/main.rb` (`App`). **Present.** Gaps within it: `app.show-location` and
+`app.show-search` are not installed (nothing calls them until the search
+provider is ported), the dead `win.selection-mode` / `win.select-all` accels
+are not reproduced, and `temperature-unit` is read from this port's own
+settings rather than mirrored into `org.gnome.GWeather4`.
 
 ## src/app/window.ts + data/window.ui — main window
 
@@ -80,7 +101,7 @@ States: `showDefault` (most recent location, else search), `showSearch`,
 `showInfo`. Settings written: `window-width`, `window-height`,
 `window-maximized`.
 
-→ `lib/window.rb`. **Absent.**
+→ `lib/window.rb`. **Present.** `win.about` and `win.refresh` installed, refresh on `F5` / `<Control>r`.
 
 ## data/window.ui `primary-menu` — menu model
 
@@ -88,7 +109,7 @@ Section “Temperature Unit” → items `_Celsius` (`app.temperature-unit`, tar
 `centigrade`) and `_Fahrenheit` (target `fahrenheit`); section → `_About
 Weather` (`win.about`). 3 items, 2 sections. Used by two `Gtk.MenuButton`s.
 
-→ `lib/primary_menu.rb` (or a memoized `Gio::Menu` on the window). **Absent.**
+→ `lib/primary_menu.rb`. **Present.**
 
 ## src/app/window.ts#showAbout — about dialog
 
@@ -98,7 +119,7 @@ Weather` (`win.about`). 3 items, 2 sections. Used by two `Gtk.MenuButton`s.
 `apps.gnome.org/Weather/`, issue URL. Plus a **conditional legal section**
 carrying `info.get_attribution()` under `Gtk.License.CUSTOM`.
 
-→ `lib/about_dialog.rb`. **Absent.**
+→ `lib/about_dialog.rb`. **Present.**
 
 ## src/app/city.ts (WeatherView) + data/city.ui — city page shell
 
@@ -112,7 +133,7 @@ carrying `info.get_attribution()` under `Gtk.License.CUSTOM`.
 Behaviour: setting `info` disconnects the old `updated` handler, shows
 `loading`, calls `info.update()` when invalid, swaps to `info` on update.
 
-→ `lib/weather_view.rb`. **Absent.**
+→ `lib/weather_view.rb`. **Present.**
 
 ## src/app/city.ts (WeatherWidget) + data/weather-widget.ui — the weather page
 
@@ -147,7 +168,7 @@ Root is an `Adw.Bin` named `weather-page` with an `Adw.ClampLayout`
 Also: a `Gtk.Widget` tick-callback scroll animation using `easeOutCubic`, and
 RTL-aware arrow logic.
 
-→ `lib/weather_widget.rb`. **Absent.**
+→ `lib/weather_widget.rb`. **Present.** The page-scroll animation uses `Adwaita::TimedAnimation` on the adjustment rather than upstream's tick callback; the conditions and forecast images ask for `-symbolic` variants, since upstream's `-large`/`-small` icons are not shipped.
 
 ## src/app/world.ts + data/places-popover.ui — places popover / world view
 
@@ -175,7 +196,7 @@ Also listens to `selected-location-changed` on the model → `window.showInfo`.
 Two instances exist at runtime (window search button, weather page places
 button).
 
-→ `lib/world_content_view.rb`. **Absent.**
+→ `lib/world_content_view.rb`. **Present.**
 
 ## src/app/entry.ts — location search entry (+ its model and filter)
 
@@ -195,7 +216,7 @@ Three classes in one file:
 | `Gtk.FilterListModel` | 1 (type) | — | — | incremental |
 | `Gtk.SignalListItemFactory` | 1 (type) | — | `setup` → new `LocationRow`; `bind` → name + country | drives `search-list-view` |
 
-→ `lib/location_search_entry.rb`. **Absent.**
+→ `lib/location_search_entry.rb`. **Present.** Backed by `lib/location.rb`'s world list instead of the GWeather tree.
 
 ## src/app/locationRow.ts + src/app/locationRow.ui — one location row
 
@@ -211,7 +232,7 @@ Three classes in one file:
 
 Used from two places (popover list rows and the search `ListView` factory).
 
-→ `lib/location_row.rb`. **Absent.**
+→ `lib/location_row.rb`. **Present.**
 
 ## src/app/hourlyForecast.ts (HourlyForecastBox) — hourly strip
 
@@ -229,7 +250,7 @@ Also a **custom `vfunc_snapshot`**: a cairo temperature spline filled with
 `weather_temp_chart_stroke_color`. Reads `clock-format` from
 `org.gnome.desktop.interface` for the “Now” / `%l∶%M %p` / `%R` labels.
 
-→ `lib/hourly_forecast_box.rb`. **Absent.**
+→ `lib/hourly_forecast_box.rb`. **Present**, including the cairo temperature spline.
 
 ## src/app/hourlyForecast.ts (HourEntry) + data/hour-entry.ui — one hour cell
 
@@ -241,7 +262,7 @@ Also a **custom `vfunc_snapshot`**: a cairo temperature spline filled with
 | `Gtk.Image` `image` | 1 | `forecast-graphic` | — | `<icon>-small`, pixel size 32 |
 | `Gtk.Label` `forecastTemperatureLabel` | 1 | `forecast-temperature-label` | — | `13°` |
 
-→ `lib/hour_entry.rb`. **Absent.**
+→ `lib/hour_entry.rb`. **Present.**
 
 ## src/app/dailyForecast.ts (DailyForecastBox) — daily strip
 
@@ -258,7 +279,7 @@ Logic: buckets forecasts by local day, picks the nearest info to each of five
 period times (night 02:00, morning 07:00, day 12:00, afternoon 17:00, evening
 22:00), computes weekly high/low.
 
-→ `lib/daily_forecast_box.rb`. **Absent.**
+→ `lib/daily_forecast_box.rb`. **Present.**
 
 ## src/app/dailyForecast.ts (DayEntry) + data/day-entry.ui — one day cell + its popover
 
@@ -280,7 +301,7 @@ period times (night 02:00, morning 07:00, day 12:00, afternoon 17:00, evening
 | `Gtk.Label` (humidity) | 4 | — | — | `nightHumidity`… |
 | `Gtk.Label` (wind) | 4 | — | — | `nightWind`…; falls back from `get_value_wind` to `get_wind()` |
 
-→ `lib/day_entry.rb`. **Absent.**
+→ `lib/day_entry.rb`. **Present.** The temperature column is headed by a degree sign rather than `temperature-symbolic`, which is not shipped.
 
 ## src/app/thermometer.ts — thermometer widget
 
@@ -298,7 +319,7 @@ drawing a rounded gradient bar between `weather_thermometer_warm_color` and
 | `Gtk.Label` low | 1 | `low`, `body` | coloured `weather_thermometer_low_color` |
 | `ThermometerScale` | 1 | `WeatherThermometerScale` (CSS name) | the drawn bar |
 
-→ `lib/thermometer.rb`. **Absent.**
+→ `lib/thermometer.rb`. **Present.** The high/low labels are packed rather than positioned along the bar, and the stylesheet selects `.weather-thermometer`.
 
 ## src/shared/world.ts — the world model
 
@@ -308,7 +329,7 @@ drawing a rounded gradient bar between `weather_thermometer_warm_color` and
 “current location”, exposes `getRecent`, `getAll`, `getAtIndex`,
 `addNewLocation`, `updateInfo`, `saveSettingsNow`.
 
-→ `lib/world_model.rb`. **Absent.** (Not a widget, but every view binds to it.)
+→ `lib/world_model.rb`. **Present.** (Not a widget, but every view binds to it.)
 
 ## src/app/currentLocationController.ts — geolocation
 
@@ -316,7 +337,7 @@ Geoclue `Simple` client at `CITY` accuracy, 100 m threshold; maps the position
 to the nearest GWeather city and pushes it into the model; logs and clears on
 failure. Non-widget.
 
-→ `lib/current_location_controller.rb`. **Absent.**
+→ `lib/current_location_controller.rb`. **Absent.** Without it `LocationRow`'s `find-location-symbolic` icon can never show, and the model's current-location slot stays empty.
 
 ## src/misc/util.ts — helpers
 
@@ -326,7 +347,7 @@ failure. Non-widget.
 `getDateTime`, `getTemp`, `formatTemperature`, `getTempString`,
 `getNameAndCountry`. Carries two translatable strings.
 
-→ `lib/util.rb`. **Absent.**
+→ `lib/util.rb`. **Present.** `loadUI`, `arrayEqual` and `getSettings` are deliberately not carried over.
 
 ## src/app/shell.ts + data/ShellWeatherIntegration.xml — shell integration
 
@@ -334,7 +355,7 @@ failure. Non-widget.
 `AutomaticLocation` (always true) and `Locations`, re-emitting
 `PropertiesChanged` on `changed::locations`. Non-widget.
 
-→ `lib/shell_integration.rb`. **Absent.**
+→ `lib/shell_integration.rb`. **Absent.** No `dbus_register` on the app yet.
 
 ## src/service/main.ts — background search-provider service
 
@@ -351,7 +372,7 @@ temperature, themed icon), `ActivateResult` → `app.show-location`,
 `LaunchSearch` → `app.show-search`. Matching is name → city → country, each
 normalised casefolded and unaccented.
 
-→ `lib/search_provider.rb`. **Absent.**
+→ `lib/search_provider.rb`. **Absent.** Its `ActivateResult` / `LaunchSearch` are what need `app.show-location` and `app.show-search`.
 
 ---
 
@@ -359,10 +380,10 @@ normalised casefolded and unaccented.
 
 | Upstream | Target | Kind | Present |
 |---|---|---|---|
-| `data/style.css` | `lib/styles.rb` (inline `Gtk::CssProvider`) | stylesheet — 9 `@define-color`s, `#places-label`, `#temperature-label`, `.content-view.cell`, `#locationEntry`, `.weather-popover`, `.forecast-card`, `.forecast-card separator`, `#conditions-grid`, `#attributionGrid`, `#weather-page .small .forecast-card`, `.forecast-temperature-label`, `WeatherThermometer`, `WeatherThermometer > label.high/.low`, `.forecast-button`, `.forecast-graphic`, `button.osd.circular`, `image.circular` | no |
-| `data/style-dark.css` | same | dark-variant colour overrides (libadwaita auto-loads it from the resource base path) | no |
-| `data/style-hc.css` | same | high-contrast override of `.forecast-card separator` | no |
-| `data/org.gnome.Weather.gschema.xml` | `lib/settings.rb` | GSettings: `locations` (`av`), `window-width`, `window-height`, `window-maximized` | no |
+| `data/style.css` | `lib/styles.rb` (inline `Gtk::CssProvider`) | stylesheet — 9 `@define-color`s, `#places-label`, `#temperature-label`, `.content-view.cell`, `#locationEntry`, `.weather-popover`, `.forecast-card`, `.forecast-card separator`, `#conditions-grid`, `#attributionGrid`, `#weather-page .small .forecast-card`, `.forecast-temperature-label`, `WeatherThermometer`, `WeatherThermometer > label.high/.low`, `.forecast-button`, `.forecast-graphic`, `button.osd.circular`, `image.circular` | yes |
+| `data/style-dark.css` | same | dark-variant colour overrides, swapped on `Adwaita::StyleManager` state change | yes |
+| `data/style-hc.css` | same | high-contrast override of `.forecast-card separator` | yes |
+| `data/org.gnome.Weather.gschema.xml` | `lib/settings.rb` | the same keys — `locations` (`av`), `window-width`, `window-height`, `window-maximized`, plus `temperature-unit` — backed by JSON under `XDG_CONFIG_HOME` rather than GSettings | yes |
 | `data/org.gnome.Weather.data.gresource.xml` | n/a — the port builds widgets in Ruby, no GResource | manifest | n/a |
 | `src/org.gnome.Weather.src.gresource.xml.in` | n/a | manifest | n/a |
 | `data/org.gnome.Weather.desktop.in.in`, `.metainfo.xml.in.in`, `.search-provider.ini.in`, `.service.in`, `BackgroundService.service.in` | packaging | desktop/appstream/D-Bus activation | no |
@@ -370,14 +391,17 @@ normalised casefolded and unaccented.
 | `data/icons/…` (35 status icons + app icons) | shipped icons — `-large`/`-small` weather variants, `checkmark-symbolic`, `temperature-symbolic`, `weather-hourly-symbolic` | assets | no |
 | `tests/world_view.py`, `tests/testutil.py` | test parity step | upstream’s only tests | no |
 
-## Things that will bite the port
+## Things that bit the port, and how
 
 - **Two custom-drawn widgets.** `HourlyForecastBox#vfunc_snapshot` (cairo
   temperature spline) and `ThermometerScale#vfunc_snapshot` (gradient bar),
-  plus `Thermometer`’s hand-written `measure`/`size_allocate`. These are the
-  only places the app leaves ordinary widget composition.
-- **`GWeather` and `Geoclue` bindings** must both be reachable from the dev
-  shell; without GWeather there is no app at all.
+  plus `Thermometer`’s hand-written `measure`/`size_allocate`. Both are
+  ported; the thermometer’s labels are packed rather than positioned.
+- **`GWeather` is not reachable from the Ruby bindings at all** — requiring the
+  typelib fails. `lib/location.rb`, `lib/weather_info.rb` and
+  `lib/weather_provider.rb` exist only to replace it, and have no upstream
+  counterpart. Geoclue is the same question still open, and is what blocks
+  `current_location_controller.rb`.
 - **Two `WorldContentView` instances** share one `WorldModel` and one global
   `LocationListModel`; the popover clears its list-view model on unroot to
   avoid both sharing a selection.
@@ -389,3 +413,18 @@ normalised casefolded and unaccented.
   widget methods; the `window.ui` property binding
   (`forecastStackSwitcherBar.reveal` ← `forecastStackSwitcher.title-visible`)
   has to be reproduced as an explicit `bind_property`.
+
+---
+
+## What is left, in the order it should be taken
+
+1. `src/app/currentLocationController.ts` → `lib/current_location_controller.rb`
+   — the only gap a user can see (the geolocated-city row icon).
+2. `app.show-location` / `app.show-search` on `App`, which the search provider
+   needs.
+3. `src/app/shell.ts` + `data/ShellWeatherIntegration.xml` →
+   `lib/shell_integration.rb`.
+4. `src/service/main.ts` + `src/service/searchProvider.ts` →
+   `lib/background_service.rb`, `lib/search_provider.rb`.
+5. The dead `win.selection-mode` / `win.select-all` accels, for exact parity.
+6. `po/` — 100 languages, handled by the translation-parity step, not here.
