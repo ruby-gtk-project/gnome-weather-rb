@@ -41,8 +41,21 @@ end
 # This file has no single counterpart upstream either: it replaces the provider
 # half of libgweather. Upstream's WorldModel builds a GWeather.Info with
 # METAR | MET_NO | OWM enabled and calls update() on it; libgweather then talks
-# to those services and emits 'updated'. With no GWeather typelib available to
-# the Ruby bindings, the port talks to a forecast service itself.
+# to those services and emits 'updated'.
+#
+# The libgweather gem (lib/location.rb uses it for the world database) does
+# load and does fetch real data here — the typelib problem the rest of this
+# comment used to describe is gone. What is still real is an architecture
+# mismatch: GWeather::Info#update is itself GLib-main-loop async and resolves
+# through its own 'updated' signal, while WeatherInfo's #update, immediately
+# below this provider, runs the fetch on a Ruby Thread and lands the result on
+# the main loop through GLib::Idle — a shape this port needed because it had
+# no async GIO call to lean on, and that is also the shape
+# test/fake_provider.rb's offline driving depends on (FakeProvider#fetch
+# returns synchronously, with no main loop involved at all). Rebuilding
+# WeatherInfo around GWeather::Info's own async cycle is a real follow-up, but
+# a bigger change than swapping a data source, so it is left as a named
+# remaining item rather than rewritten under this round's time budget.
 #
 # Open-Meteo is the service, because it needs no API key and publishes both the
 # current conditions and an hourly series — the two things the app draws. Its

@@ -96,6 +96,31 @@ Gem::Specification.new do |spec|
   spec.executables = ["gnome-weather"]
   spec.require_paths = ["lib"]
 
+  # Runtime dependencies. This gemspec had none at all, which meant
+  # `gem install` produced something that could not load its own toolkit.
+  spec.add_dependency("gem_kit", "~> 0.2")
+  spec.add_dependency("gtk4", "~> 4.3")
+  spec.add_dependency("adwaita", "~> 4.3")
+  spec.add_dependency("glib2", "~> 4.3")
+
+  # GWeather supplies the world location database and real forecast data —
+  # see lib/location.rb, which walks its location tree rather than carrying a
+  # hardcoded city list. It is a loader over a typelib, so it also needs that
+  # typelib present at runtime; flake.nix carries it for the dev shell, and a
+  # packaged app needs the distribution's equivalent, which the gem's README
+  # names.
+  spec.add_dependency("libgweather", "~> 1.0")
+
+  # ashpd (0.1.1, the only release on rubygems) is required and wired into
+  # nix/Gemfile, nix/gemset.nix and flake.nix exactly as the fork's other
+  # ports wire it, and it loads cleanly. It is not yet called from any
+  # component: its only published modules are Account, Camera, OpenUri,
+  # Screenshot, Settings and Trash — there is no Location/geolocation portal
+  # in this release for current_location_controller.rb to use, so that
+  # component is not implemented this round rather than faked against a
+  # portal this gem does not expose.
+  spec.add_dependency("ashpd", "~> 1.0")
+
   # NOTE: It is preferable to list development dependencies in the gemspec due to increased
   #       visibility and discoverability.
   #       However, development dependencies in gemspec will install on
