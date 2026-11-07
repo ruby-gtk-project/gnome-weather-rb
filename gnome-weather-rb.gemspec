@@ -93,7 +93,7 @@ Gem::Specification.new do |spec|
   ]
   spec.bindir = "exe"
   # Listed files are the relative paths from bindir above.
-  spec.executables = ["gnome-weather"]
+  spec.executables = ["gnome-weather", "gnome-weather-search-provider"]
   spec.require_paths = ["lib"]
 
   # Runtime dependencies. This gemspec had none at all, which meant

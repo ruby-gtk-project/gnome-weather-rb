@@ -6,8 +6,10 @@ require 'adwaita'
 require_relative 'gnome/weather/rb/version'
 require_relative 'settings'
 require_relative 'styles'
+require_relative 'location'
 require_relative 'world_model'
 require_relative 'window'
+require_relative 'shell_integration'
 
 # App is the main application class.
 #
@@ -15,13 +17,20 @@ require_relative 'window'
 # application object, the model it loads at startup, the actions it publishes,
 # and the window it opens on activation.
 #
-# What upstream does and this port does not, yet:
+# The show-location and show-search actions exist for lib/search_provider.rb
+# (running in the separate service process of lib/background_service.rb) to
+# call into a running instance of this app over org.freedesktop.Application's
+# ActivateAction, exactly as upstream's searchProvider.ts does.
 #
-#   * dbus_register/dbus_unregister, which export the shell weather
-#     integration — src/app/shell.ts is not ported yet
-#   * the show-location and show-search actions, which exist for the shell
-#     search provider to call into a running instance — src/service is not
-#     ported yet
+# show-location's parameter is a tuple of (name, country, latitude,
+# longitude) rather than upstream's serialized GWeather.Location: this port's
+# Location has no byte-compatible stand-in for gweather_location_serialize(),
+# documented in lib/location.rb and lib/shell_integration.rb, so the search
+# provider and this action agree on their own flat shape instead. A GVariant
+# dictionary (a{sv}, the shape a plain hash would need) cannot be unpacked
+# back into Ruby by these bindings when it arrives as an action parameter —
+# only a tuple of scalars round-trips — which is the other reason the shape
+# is flat rather than a dictionary.
 #
 # Adwaita::Application is broken in the Ruby bindings, so the application
 # object is a Gtk::Application and only the window is Adwaita's. Everything
@@ -72,6 +81,8 @@ class App
     )
   end
 
+  def shell_integration = @shell_integration ||= ShellIntegration.new(@settings)
+
   private
 
     # Upstream's vfunc_startup: the stylesheet, the saved locations, the busy
@@ -82,6 +93,7 @@ class App
 
       styles.build
       setup_actions
+      export_shell_integration
 
       app.mark_busy
       model.on_loading_changed do |loading|
@@ -96,11 +108,23 @@ class App
     end
 
     def on_activate
-      window.tap do |win|
-        win.build
-        win.show_default
-        win.present
+      ensure_window_built
+      window.show_default
+      window.present
+    end
+
+    def ensure_window_built
+      unless @window_built
+        window.build
+        @window_built = true
       end
+    end
+
+    # Upstream's vfunc_dbus_register: the Ruby bindings cannot override that
+    # virtual function, so the export happens here instead, off the
+    # connection the application has already registered on by 'startup'.
+    def export_shell_integration
+      shell_integration.export(app.dbus_connection, app.dbus_object_path)
     end
 
     def setup_actions
@@ -115,6 +139,25 @@ class App
       app.set_accels_for_action('window.close', WINDOW_CLOSE_ACCELS)
 
       add_temperature_unit_action
+      add_show_location_action
+      add_show_search_action
+    end
+
+    # Upstream's showLocationAction: the shell search provider's
+    # ActivateResult reaches here, over org.freedesktop.Application.
+    def add_show_location_action
+      Gio::SimpleAction.new('show-location', GLib::VariantType.new('v')).tap do |action|
+        action.signal_connect('activate') { |_, parameter| action_show_location(parameter) }
+        app.add_action(action)
+      end
+    end
+
+    # Upstream's showSearchAction: the shell search provider's LaunchSearch.
+    def add_show_search_action
+      Gio::SimpleAction.new('show-search', GLib::VariantType.new('s')).tap do |action|
+        action.signal_connect('activate') { |_, parameter| action_show_search(parameter) }
+        app.add_action(action)
+      end
     end
 
     # Upstream's temperature-unit action, hand-coded there as it is here: a
@@ -142,6 +185,29 @@ class App
       if Settings::UNITS.include?(unit)
         @settings[TEMPERATURE_UNIT] = unit
       end
+    end
+
+    # Upstream's onShowLocation. parameter deep-unpacks to a plain Ruby Array
+    # already — these bindings unwrap a 'v' parameter carrying a tuple of
+    # scalars down to native Ruby, with no GLib::Variant left to unpack by
+    # hand.
+    def action_show_location(parameter)
+      Array(parameter).then do |(name, country, latitude, longitude)|
+        model.add_new_location(
+          Location.new(name: name.to_s, country_name: country.to_s, latitude: latitude, longitude: longitude),
+        ).then do |info|
+          ensure_window_built
+          window.show_info(info)
+          window.present
+        end
+      end
+    end
+
+    # Upstream's onShowSearch.
+    def action_show_search(parameter)
+      ensure_window_built
+      window.show_search(parameter.to_s)
+      window.present
     end
 
     def action_quit = app.quit

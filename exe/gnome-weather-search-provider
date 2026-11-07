@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+# frozen_string_literal: true
+
+# Entry point for the background service GNOME Shell D-Bus-activates to
+# search this app's locations.
+#
+# Upstream's src/service/main.ts does the same: build the background service
+# and run it.
+
+require_relative '../lib/background_service'
+
+BackgroundService.new.build.run
