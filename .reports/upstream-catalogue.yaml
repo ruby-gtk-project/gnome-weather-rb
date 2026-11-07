@@ -1,0 +1,375 @@
+---
+version: 1
+tree:
+  role: upstream
+  path: "../gnome-weather-upstream"
+  ref: HEAD
+  sha: 6930d4a
+  scanned: '2026-11-07'
+domain: gnome-weather
+domain_source: meson project() - unconfirmed
+totals:
+  messages: 49
+  occurrences: 59
+  reused: 5
+  plural: 5
+  with_context: 0
+  unresolved: 1
+languages:
+  count: 87
+  translated_strings: 4164
+  untranslated_strings: 31
+  fuzzy_strings: 2
+  list:
+  - ab
+  - af
+  - an
+  - ar
+  - as
+  - az
+  - be
+  - be@latin
+  - bg
+  - bn
+  - bn_IN
+  - bs
+  - ca
+  - ca@valencia
+  - ckb
+  - cs
+  - da
+  - de
+  - el
+  - en_GB
+  - eo
+  - es
+  - et
+  - eu
+  - fa
+  - fi
+  - fil
+  - fr
+  - fur
+  - fy
+  - ga
+  - gd
+  - gl
+  - gu
+  - he
+  - hi
+  - hr
+  - hu
+  - ia
+  - id
+  - is
+  - it
+  - ja
+  - ka
+  - kab
+  - kk
+  - kn
+  - ko
+  - kw
+  - lo
+  - lt
+  - lv
+  - mg
+  - mjw
+  - ml
+  - ms
+  - my
+  - nb
+  - ne
+  - nl
+  - nn
+  - oc
+  - pa
+  - pl
+  - pt
+  - pt_BR
+  - ro
+  - ru
+  - rw
+  - sat
+  - sk
+  - sl
+  - sr
+  - sr@latin
+  - sv
+  - ta
+  - te
+  - tg
+  - th
+  - tr
+  - ug
+  - uk
+  - uz
+  - vi
+  - zh_CN
+  - zh_HK
+  - zh_TW
+  linguas_matches_files: true
+unresolved:
+- marker: 'ngettext(msgid: string, msgid_plural: string, n: number): string;'
+  site: src/app/main.ts:37
+messages:
+- id: "%b %e"
+  kind: single
+  uses: 1
+  sites:
+  - src/app/dailyForecast.ts:335
+- id: "%l∶%M %p"
+  kind: single
+  uses: 1
+  sites:
+  - src/app/hourlyForecast.ts:146
+- id: "%s / %s"
+  kind: single
+  uses: 1
+  sites:
+  - src/misc/util.ts:107
+- id: "%s, %s"
+  kind: single
+  uses: 1
+  sites:
+  - src/service/searchProvider.ts:214
+- id: A small application that allows you to monitor the current weather conditions
+    for your city, or anywhere in the world.
+  kind: single
+  uses: 1
+  sites:
+  - data/org.gnome.Weather.metainfo.xml.in.in
+- id: Afternoon
+  kind: single
+  uses: 1
+  sites:
+  - data/day-entry.ui:46
+- id: Configured cities to show weather for
+  kind: single
+  uses: 1
+  sites:
+  - data/org.gnome.Weather.gschema.xml
+- id: Daily Forecast
+  kind: single
+  uses: 1
+  sites:
+  - src/app/dailyForecast.ts:72
+- id: Daily View
+  kind: single
+  uses: 1
+  sites:
+  - data/org.gnome.Weather.metainfo.xml.in.in
+- id: Evening
+  kind: single
+  uses: 1
+  sites:
+  - data/day-entry.ui:59
+- id: Feels like %.0f°
+  kind: single
+  uses: 1
+  sites:
+  - src/app/city.ts:259
+- id: Forecast not Available
+  kind: single
+  uses: 2
+  sites:
+  - src/app/dailyForecast.ts:143
+  - src/app/hourlyForecast.ts:114
+- id: Hourly Forecast
+  kind: single
+  uses: 1
+  sites:
+  - src/app/hourlyForecast.ts:53
+- id: Hourly View
+  kind: single
+  uses: 1
+  sites:
+  - data/org.gnome.Weather.metainfo.xml.in.in
+- id: It also optionally integrates with the GNOME Shell, allowing you to see the
+    current conditions of the most recently searched cities by just typing the name
+    in the Activities Overview.
+  kind: single
+  uses: 1
+  sites:
+  - data/org.gnome.Weather.metainfo.xml.in.in
+- id: It provides access to detailed forecasts, up to 7 days, with hourly details
+    for the current and next day, using various internet services.
+  kind: single
+  uses: 1
+  sites:
+  - data/org.gnome.Weather.metainfo.xml.in.in
+- id: Main Menu
+  kind: single
+  uses: 1
+  sites:
+  - data/window.ui:87
+- id: Morning
+  kind: single
+  uses: 1
+  sites:
+  - data/day-entry.ui:33
+- id: Night
+  kind: single
+  uses: 1
+  sites:
+  - data/day-entry.ui:20
+- id: Now
+  kind: single
+  uses: 1
+  sites:
+  - src/app/hourlyForecast.ts:139
+- id: Places
+  kind: single
+  uses: 1
+  sites:
+  - data/weather-widget.ui:42
+- id: Refresh
+  kind: single
+  uses: 1
+  sites:
+  - data/window.ui:73
+- id: Search for a city
+  kind: single
+  uses: 2
+  sites:
+  - data/places-popover.ui:15
+  - data/places-popover.ui:76
+- id: Search for a city or country
+  kind: single
+  uses: 1
+  sites:
+  - data/window.ui:54
+- id: Show weather conditions and forecast
+  kind: single
+  uses: 2
+  sites:
+  - data/org.gnome.Weather.desktop.in.in:4
+  - data/org.gnome.Weather.metainfo.xml.in.in
+- id: Temperature Unit
+  kind: single
+  uses: 1
+  sites:
+  - data/window.ui:6
+- id: The GNOME Project
+  kind: single
+  uses: 2
+  sites:
+  - data/org.gnome.Weather.metainfo.xml.in.in
+  - src/app/window.ts:189
+- id: The height of the main window.
+  kind: single
+  uses: 1
+  sites:
+  - data/org.gnome.Weather.gschema.xml
+- id: The locations shown in the world view of gnome-weather. Each value is a GVariant
+    returned by gweather_location_serialize().
+  kind: single
+  uses: 1
+  sites:
+  - data/org.gnome.Weather.gschema.xml
+- id: The width of the main window.
+  kind: single
+  uses: 1
+  sites:
+  - data/org.gnome.Weather.gschema.xml
+- id: To get started, select a location.
+  kind: single
+  uses: 1
+  sites:
+  - data/window.ui:48
+- id: Updated %d day ago.
+  kind: plural
+  uses: 1
+  sites:
+  - src/app/city.ts:309
+- id: Updated %d hour ago.
+  kind: plural
+  uses: 1
+  sites:
+  - src/app/city.ts:301
+- id: Updated %d minute ago.
+  kind: plural
+  uses: 1
+  sites:
+  - src/app/city.ts:293
+- id: Updated %d month ago.
+  kind: plural
+  uses: 1
+  sites:
+  - src/app/city.ts:324
+- id: Updated %d week ago.
+  kind: plural
+  uses: 1
+  sites:
+  - src/app/city.ts:317
+- id: Updated just now.
+  kind: single
+  uses: 1
+  sites:
+  - src/app/city.ts:289
+- id: Weather
+  kind: single
+  uses: 7
+  sites:
+  - data/org.gnome.Weather.desktop.in.in:3
+  - data/org.gnome.Weather.metainfo.xml.in.in
+  - data/window.ui:82
+  - src/app/application.ts:53
+  - src/app/window.ts:187
+  - src/app/window.ts:199
+  - src/service/main.ts:50
+- id: Weather;Forecast;
+  kind: single
+  uses: 1
+  sites:
+  - data/org.gnome.Weather.desktop.in.in:12
+- id: Welcome to Weather!
+  kind: single
+  uses: 1
+  sites:
+  - data/window.ui:47
+- id: Whether or not the window is maximized.
+  kind: single
+  uses: 1
+  sites:
+  - data/org.gnome.Weather.gschema.xml
+- id: Window maximized
+  kind: single
+  uses: 1
+  sites:
+  - data/org.gnome.Weather.gschema.xml
+- id: World view
+  kind: single
+  uses: 1
+  sites:
+  - src/app/world.ts:73
+- id: _About Weather
+  kind: single
+  uses: 1
+  sites:
+  - data/window.ui:21
+- id: _Celsius
+  kind: single
+  uses: 1
+  sites:
+  - data/window.ui:8
+- id: _Daily
+  kind: single
+  uses: 1
+  sites:
+  - data/weather-widget.ui:124
+- id: _Fahrenheit
+  kind: single
+  uses: 1
+  sites:
+  - data/window.ui:13
+- id: _Hourly
+  kind: single
+  uses: 1
+  sites:
+  - data/weather-widget.ui:92
+- id: translator-credits
+  kind: single
+  uses: 1
+  sites:
+  - src/app/window.ts:186

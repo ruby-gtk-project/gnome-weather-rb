@@ -1,0 +1,23 @@
+---
+version: 1
+tree:
+  role: port
+  path: "."
+  ref: ruby
+  sha: a52fce1
+  scanned: '2026-11-07'
+domain:
+domain_source:
+totals:
+  messages: 0
+  occurrences: 0
+  reused: 0
+  plural: 0
+  with_context: 0
+  unresolved: 0
+languages:
+  count: 0
+  list: []
+  translated_strings: 0
+unresolved: []
+messages: []

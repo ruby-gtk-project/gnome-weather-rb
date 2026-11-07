@@ -1,0 +1,690 @@
+---
+version: 1
+upstream:
+  role: upstream
+  path: "../gnome-weather-upstream"
+  ref: HEAD
+  sha: 6930d4a
+  scanned: '2026-11-07'
+  domain: gnome-weather
+  messages: 49
+  occurrences: 59
+  reused: 5
+  plural: 5
+  with_context: 0
+  unresolved: 1
+port:
+  role: port
+  path: "."
+  ref: ruby
+  sha: a52fce1
+  scanned: '2026-11-07'
+  domain:
+  messages: 0
+  occurrences: 0
+  reused: 0
+  plural: 0
+  with_context: 0
+  unresolved: 0
+summary:
+  ported: 0
+  gaps: 49
+  extra: 0
+  kind_mismatch: 0
+  uses_mismatch: 0
+  occurrences:
+    upstream: 59
+    port: 0
+  languages:
+    upstream: 87
+    port: 0
+  languages_missing:
+  - ab
+  - af
+  - an
+  - ar
+  - as
+  - az
+  - be
+  - be@latin
+  - bg
+  - bn
+  - bn_IN
+  - bs
+  - ca
+  - ca@valencia
+  - ckb
+  - cs
+  - da
+  - de
+  - el
+  - en_GB
+  - eo
+  - es
+  - et
+  - eu
+  - fa
+  - fi
+  - fil
+  - fr
+  - fur
+  - fy
+  - ga
+  - gd
+  - gl
+  - gu
+  - he
+  - hi
+  - hr
+  - hu
+  - ia
+  - id
+  - is
+  - it
+  - ja
+  - ka
+  - kab
+  - kk
+  - kn
+  - ko
+  - kw
+  - lo
+  - lt
+  - lv
+  - mg
+  - mjw
+  - ml
+  - ms
+  - my
+  - nb
+  - ne
+  - nl
+  - nn
+  - oc
+  - pa
+  - pl
+  - pt
+  - pt_BR
+  - ro
+  - ru
+  - rw
+  - sat
+  - sk
+  - sl
+  - sr
+  - sr@latin
+  - sv
+  - ta
+  - te
+  - tg
+  - th
+  - tr
+  - ug
+  - uk
+  - uz
+  - vi
+  - zh_CN
+  - zh_HK
+  - zh_TW
+  domain_matches: false
+  parity: false
+messages:
+- id: "%b %e"
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - src/app/dailyForecast.ts:335
+  text_owed: "%b %e"
+- id: "%l∶%M %p"
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - src/app/hourlyForecast.ts:146
+  text_owed: "%l∶%M %p"
+- id: "%s / %s"
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - src/misc/util.ts:107
+  text_owed: "%s / %s"
+- id: "%s, %s"
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - src/service/searchProvider.ts:214
+  text_owed: "%s, %s"
+- id: A small application that allows you to monitor the current weather conditions
+    for your city, or anywhere in the world.
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/org.gnome.Weather.metainfo.xml.in.in
+  text_owed: A small application that allows you to monitor the current weather conditions
+    for your city, or anywhere in the world.
+- id: Afternoon
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/day-entry.ui:46
+  text_owed: Afternoon
+- id: Configured cities to show weather for
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/org.gnome.Weather.gschema.xml
+  text_owed: Configured cities to show weather for
+- id: Daily Forecast
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - src/app/dailyForecast.ts:72
+  text_owed: Daily Forecast
+- id: Daily View
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/org.gnome.Weather.metainfo.xml.in.in
+  text_owed: Daily View
+- id: Evening
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/day-entry.ui:59
+  text_owed: Evening
+- id: Feels like %.0f°
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - src/app/city.ts:259
+  text_owed: Feels like %.0f°
+- id: Forecast not Available
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 2
+    port: 0
+  upstream_sites:
+  - src/app/dailyForecast.ts:143
+  - src/app/hourlyForecast.ts:114
+  text_owed: Forecast not Available
+- id: Hourly Forecast
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - src/app/hourlyForecast.ts:53
+  text_owed: Hourly Forecast
+- id: Hourly View
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/org.gnome.Weather.metainfo.xml.in.in
+  text_owed: Hourly View
+- id: It also optionally integrates with the GNOME Shell, allowing you to see the
+    current conditions of the most recently searched cities by just typing the name
+    in the Activities Overview.
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/org.gnome.Weather.metainfo.xml.in.in
+  text_owed: It also optionally integrates with the GNOME Shell, allowing you to see
+    the current conditions of the most recently searched cities by just typing the
+    name in the Activities Overview.
+- id: It provides access to detailed forecasts, up to 7 days, with hourly details
+    for the current and next day, using various internet services.
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/org.gnome.Weather.metainfo.xml.in.in
+  text_owed: It provides access to detailed forecasts, up to 7 days, with hourly details
+    for the current and next day, using various internet services.
+- id: Main Menu
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/window.ui:87
+  text_owed: Main Menu
+- id: Morning
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/day-entry.ui:33
+  text_owed: Morning
+- id: Night
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/day-entry.ui:20
+  text_owed: Night
+- id: Now
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - src/app/hourlyForecast.ts:139
+  text_owed: Now
+- id: Places
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/weather-widget.ui:42
+  text_owed: Places
+- id: Refresh
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/window.ui:73
+  text_owed: Refresh
+- id: Search for a city
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 2
+    port: 0
+  upstream_sites:
+  - data/places-popover.ui:15
+  - data/places-popover.ui:76
+  text_owed: Search for a city
+- id: Search for a city or country
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/window.ui:54
+  text_owed: Search for a city or country
+- id: Show weather conditions and forecast
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 2
+    port: 0
+  upstream_sites:
+  - data/org.gnome.Weather.desktop.in.in:4
+  - data/org.gnome.Weather.metainfo.xml.in.in
+  text_owed: Show weather conditions and forecast
+- id: Temperature Unit
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/window.ui:6
+  text_owed: Temperature Unit
+- id: The GNOME Project
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 2
+    port: 0
+  upstream_sites:
+  - data/org.gnome.Weather.metainfo.xml.in.in
+  - src/app/window.ts:189
+  text_owed: The GNOME Project
+- id: The height of the main window.
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/org.gnome.Weather.gschema.xml
+  text_owed: The height of the main window.
+- id: The locations shown in the world view of gnome-weather. Each value is a GVariant
+    returned by gweather_location_serialize().
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/org.gnome.Weather.gschema.xml
+  text_owed: The locations shown in the world view of gnome-weather. Each value is
+    a GVariant returned by gweather_location_serialize().
+- id: The width of the main window.
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/org.gnome.Weather.gschema.xml
+  text_owed: The width of the main window.
+- id: To get started, select a location.
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/window.ui:48
+  text_owed: To get started, select a location.
+- id: Updated %d day ago.
+  state: gap
+  kind:
+    upstream: plural
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - src/app/city.ts:309
+  text_owed: Updated %d day ago.
+- id: Updated %d hour ago.
+  state: gap
+  kind:
+    upstream: plural
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - src/app/city.ts:301
+  text_owed: Updated %d hour ago.
+- id: Updated %d minute ago.
+  state: gap
+  kind:
+    upstream: plural
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - src/app/city.ts:293
+  text_owed: Updated %d minute ago.
+- id: Updated %d month ago.
+  state: gap
+  kind:
+    upstream: plural
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - src/app/city.ts:324
+  text_owed: Updated %d month ago.
+- id: Updated %d week ago.
+  state: gap
+  kind:
+    upstream: plural
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - src/app/city.ts:317
+  text_owed: Updated %d week ago.
+- id: Updated just now.
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - src/app/city.ts:289
+  text_owed: Updated just now.
+- id: Weather
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 7
+    port: 0
+  upstream_sites:
+  - data/org.gnome.Weather.desktop.in.in:3
+  - data/org.gnome.Weather.metainfo.xml.in.in
+  - data/window.ui:82
+  - src/app/application.ts:53
+  - src/app/window.ts:187
+  - src/app/window.ts:199
+  - src/service/main.ts:50
+  text_owed: Weather
+- id: Weather;Forecast;
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/org.gnome.Weather.desktop.in.in:12
+  text_owed: Weather;Forecast;
+- id: Welcome to Weather!
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/window.ui:47
+  text_owed: Welcome to Weather!
+- id: Whether or not the window is maximized.
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/org.gnome.Weather.gschema.xml
+  text_owed: Whether or not the window is maximized.
+- id: Window maximized
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/org.gnome.Weather.gschema.xml
+  text_owed: Window maximized
+- id: World view
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - src/app/world.ts:73
+  text_owed: World view
+- id: _About Weather
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/window.ui:21
+  text_owed: _About Weather
+- id: _Celsius
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/window.ui:8
+  text_owed: _Celsius
+- id: _Daily
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/weather-widget.ui:124
+  text_owed: _Daily
+- id: _Fahrenheit
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/window.ui:13
+  text_owed: _Fahrenheit
+- id: _Hourly
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - data/weather-widget.ui:92
+  text_owed: _Hourly
+- id: translator-credits
+  state: gap
+  kind:
+    upstream: single
+    port:
+  uses:
+    upstream: 1
+    port: 0
+  upstream_sites:
+  - src/app/window.ts:186
+  text_owed: translator-credits
