@@ -60,7 +60,6 @@ PLATFORMS
 
 DEPENDENCIES
   adwaita
-  gem_kit
   glib2
   gtk4
   libgweather

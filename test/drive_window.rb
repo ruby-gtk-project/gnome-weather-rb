@@ -36,6 +36,10 @@ GtkDriver.drive(app, shots: 'tmp/shots', interval: 700) do |d, _app|
   d.step('the welcome page is showing') do
     d.check('welcome page visible') { app.window.stack.visible_child == app.window.search_view }
     d.check('no saved locations yet') { model.length.zero? }
+    # App#on_startup calls GLib.application_name= directly (glib2's own API,
+    # not something gtk4/adwaita wrap); this confirms that call actually ran
+    # on the live startup path, not just that `require 'glib2'` succeeded.
+    d.check('GLib.application_name was set on startup') { GLib.application_name == 'Weather' }
     d.shot('01-welcome')
   end
 

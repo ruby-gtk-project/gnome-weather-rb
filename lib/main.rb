@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require 'glib2'
 require 'adwaita'
 
 require_relative 'gnome/weather/rb/version'

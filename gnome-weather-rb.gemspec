@@ -98,7 +98,6 @@ Gem::Specification.new do |spec|
 
   # Runtime dependencies. This gemspec had none at all, which meant
   # `gem install` produced something that could not load its own toolkit.
-  spec.add_dependency("gem_kit", "~> 0.2")
   spec.add_dependency("gtk4", "~> 4.3")
   spec.add_dependency("adwaita", "~> 4.3")
   spec.add_dependency("glib2", "~> 4.3")
@@ -110,6 +109,15 @@ Gem::Specification.new do |spec|
   # packaged app needs the distribution's equivalent, which the gem's README
   # names.
   spec.add_dependency("libgweather", "~> 1.0")
+
+  # gem_kit was declared here as an explicit runtime dependency, but nothing
+  # under lib/ ever calls GemKit (it is a deprecation DSL -- GemKit::Deprecate
+  # -- and this port has nothing deprecated to mark). It is not dead weight
+  # to drop: libgweather itself depends on gem_kit (see nix/gemset.nix), so
+  # bundler/rubygems installs it anyway as libgweather's own dependency.
+  # Declaring it again here only duplicated that transitive requirement
+  # without this gem ever using its API, so it is removed per the same rule
+  # applied to ashpd below: no call site, no declared dependency.
 
   # ashpd was declared here for the XDG portals (file chooser, screenshot,
   # background, location, remote desktop), but checked against both upstream
