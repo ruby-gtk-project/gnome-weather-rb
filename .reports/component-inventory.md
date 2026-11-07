@@ -7,18 +7,34 @@ port side, and what is left is the out-of-window surface — geolocation, the
 shell integration object, the background service and its search provider —
 plus the `po/` catalogue.
 
-**Update (this pass):** `libgweather` (`GWeather`) and `ashpd` (`Ashpd`) are now
-wired as runtime dependencies — `gnome-weather-rb.gemspec` declares both,
-`nix/Gemfile`/`nix/Gemfile.lock` carry them, and `flake.nix`'s `gtkStack` feeds
-their typelibs. `lib/location.rb` already uses the real `GWeather::Location`
-(confirmed by its own header comment and `GWeather::Location.world`), so the
-"GWeather typelib is not reachable" premise below is **no longer true** for
-that file. It is still true in effect for `lib/weather_info.rb` and
-`lib/weather_provider.rb`: both still fetch and model weather data by hand
-(`net/http`, `json`, a bespoke `Reading` struct) instead of calling
-`GWeather::Info#update` and its accessors, by their own header comments'
-admission — that is the next thing to fix, not something to leave standing
-now that the gem loads. `lib/settings.rb` and `lib/main.rb` likewise still
+**Update (this pass):** re-verified the gem wiring directly against the
+gemspec and a live `nix develop` shell, correcting a stale claim this file
+previously made. `libgweather` (`GWeather`) is the one gem this app's
+mandatory list names, and it **is** wired: `gnome-weather-rb.gemspec` declares
+`spec.add_dependency("libgweather", "~> 1.0")`, `nix/Gemfile`/`Gemfile.lock`
+carry it, and `nix develop --command ruby -e 'require "libgweather"; puts
+GWeather.constants.size'` returns a non-zero count (17) on this machine.
+`lib/location.rb` uses the real `GWeather::Location` (confirmed by its own
+header comment and `GWeather::Location.world`).
+
+**`ashpd` is correctly *not* a dependency** — the previous version of this
+file claimed it was "now wired," which does not match the gemspec as it
+stands: `ashpd` was declared once and then deliberately removed, with the
+gemspec's own comment explaining why (upstream calls GeoClue2's D-Bus service
+directly via `gi://Geoclue`, not an xdg-desktop-portal location interface, and
+ashpd 0.1.1 — the only release on RubyGems — does not publish a Location
+portal module at all). That removal is correct per the "no call site, no
+declared dependency" rule and should not be re-added; it is a dead end, not a
+gap. The current-location gap is tracked below against Geoclue/geolocation,
+not against `ashpd`.
+
+It is still true that `lib/weather_info.rb` and `lib/weather_provider.rb`
+fetch and model weather data by hand (`net/http`, `json`, a bespoke `Reading`
+struct) instead of calling `GWeather::Info#update` and its accessors, by their
+own header comments' admission — both comments argue this is forced by a
+real async-model mismatch between `GWeather::Info#update`'s GLib-main-loop
+callback and the rest of the port, not laziness; that argument has not been
+re-litigated in this pass. `lib/settings.rb` and `lib/main.rb` likewise still
 hand-roll the `temperature-unit` preference instead of going through GSettings
 or GWeather's own key, per their own comments. Nothing else below has been
 re-verified in this pass; treat the rest of this file as still current per its
@@ -414,18 +430,21 @@ normalised casefolded and unaccented.
   temperature spline) and `ThermometerScale#vfunc_snapshot` (gradient bar),
   plus `Thermometer`’s hand-written `measure`/`size_allocate`. Both are
   ported; the thermometer’s labels are packed rather than positioned.
-- **`GWeather` and `ashpd` are now wired gem dependencies** (gemspec,
-  `nix/Gemfile`, `flake.nix`'s `gtkStack`/typelib wiring) — this was not true
-  the last time this section was written. `lib/location.rb` already uses the
-  real `GWeather::Location`. `lib/weather_info.rb` and `lib/weather_provider.rb`
+- **`GWeather` is a wired gem dependency** (gemspec, `nix/Gemfile`,
+  `flake.nix`'s `gtkStack`/typelib wiring) and loads live (`GWeather.constants`
+  is non-empty under `nix develop`). `lib/location.rb` already uses the real
+  `GWeather::Location`. `lib/weather_info.rb` and `lib/weather_provider.rb`
   still replace `GWeather.Info` by hand (`net/http`/`json`) instead of calling
-  it, which is now a correctness gap to close rather than a binding limitation
-  to work around. `current_location_controller.rb` is still entirely absent;
-  with `ashpd` wired, it should use `Ashpd`'s location portal rather than
-  reinventing Geoclue access — confirm the portal is genuinely usable before
-  assuming this unblocks the file (see the fleet's gem-usability caveat: if
-  `ashpd` turns out unusable for this, that has to be reported with the exact
-  error, not quietly worked around).
+  it; their own header comments argue this is forced by an async-model
+  mismatch rather than a missing binding, which is a real tradeoff to
+  re-examine rather than a plain correctness gap. **`ashpd` is correctly
+  absent** — it was declared once and removed because upstream's
+  `currentLocationController.ts` calls GeoClue2's own D-Bus service directly
+  (`gi://Geoclue`), never an xdg-desktop-portal location interface, and ashpd
+  0.1.1 (the only RubyGems release) publishes no Location portal module to
+  call even if it were the right target. `current_location_controller.rb` is
+  still entirely absent; when it is built, it is a GeoClue2 GI binding
+  problem (`Geoclue.Simple`), not an `ashpd` one.
 - **Two `WorldContentView` instances** share one `WorldModel` and one global
   `LocationListModel`; the popover clears its list-view model on unroot to
   avoid both sharing a selection.
