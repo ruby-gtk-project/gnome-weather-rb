@@ -111,22 +111,27 @@ Gem::Specification.new do |spec|
   # names.
   spec.add_dependency("libgweather", "~> 1.0")
 
-  # ashpd (0.1.1, the only release on rubygems) is required and wired into
-  # nix/Gemfile, nix/gemset.nix and flake.nix exactly as the fork's other
-  # ports wire it, and it loads cleanly. It is not yet called from any
-  # component: its only published modules are Account, Camera, OpenUri,
-  # Screenshot, Settings and Trash — there is no Location/geolocation portal
-  # in this release for current_location_controller.rb to use, so that
-  # component is not implemented this round rather than faked against a
-  # portal this gem does not expose.
+  # ashpd was declared here for the XDG portals (file chooser, screenshot,
+  # background, location, remote desktop), but checked against both upstream
+  # and the gem itself, neither side has a match:
   #
-  # The constraint is "~> 0.1", not "~> 1.0": the only release on rubygems is
-  # 0.1.1, and "~> 1.0" cannot resolve against it at all, so `gem install
-  # gnome-weather-rb` would fail dependency resolution even though the gem is
-  # actually wired and loads fine. nix/Gemfile has no version constraint, so
-  # the dev shell's bundle never caught this.
-  spec.add_dependency("ashpd", "~> 0.1")
-
+  # - Upstream (src/app/currentLocationController.ts) gets the current
+  #   location from `gi://Geoclue` (GeoClue2's own D-Bus service) called
+  #   directly, not from any xdg-desktop-portal interface; the Flatpak
+  #   manifest (org.gnome.Weather.json) has no portal- or GeoClue-related
+  #   finish-arg either, so there is no location-portal feature here to port.
+  #   Upstream has no file chooser, screenshot, background-portal or
+  #   remote-desktop code anywhere.
+  # - ashpd 0.1.1 (the only release on rubygems) only publishes Account,
+  #   Camera, OpenUri, Screenshot, Settings and Trash — it does not expose a
+  #   Location portal at all, so it could not serve that upstream feature
+  #   even if upstream used the portal for it.
+  #
+  # With no upstream feature on one side and no matching module on the
+  # other, there is nothing for this gem to call. See the current-location
+  # gap tracked instead against `geoclue` (GeoClue2's own GI binding, which
+  # is what upstream actually calls) rather than against ashpd.
+  #
   # NOTE: It is preferable to list development dependencies in the gemspec due to increased
   #       visibility and discoverability.
   #       However, development dependencies in gemspec will install on

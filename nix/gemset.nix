@@ -10,17 +10,6 @@
     };
     version = "4.4.0";
   };
-  ashpd = {
-    dependencies = ["gem_kit"];
-    groups = ["default"];
-    platforms = [];
-    source = {
-      remotes = ["https://rubygems.org"];
-      sha256 = "156x0l8fal0n05k6ya6qdfgl8277595mrg6gx0syis6dx3rr8fk7";
-      type = "gem";
-    };
-    version = "0.1.1";
-  };
   atk = {
     dependencies = ["glib2" "rake"];
     groups = ["default"];
