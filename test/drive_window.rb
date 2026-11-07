@@ -1,10 +1,13 @@
 # frozen_string_literal: true
 
 # Drives the main window: search for a city, watch the weather page fill in,
-# switch forecast pages, open the About dialog, refresh, and change the
-# temperature unit.
+# switch forecast pages, open the About dialog, refresh, change the
+# temperature unit, open the hamburger menu, hit a failed fetch, and remove a
+# saved location.
 #
-# The weather comes from FakeProvider, so this runs with no network.
+# The weather comes from FakeProvider, so this runs with no network. Paris is
+# configured to fail its fetch, which exercises the "could not load" path
+# WeatherInfo#fetch_quietly falls back to.
 #
 #   nix develop --command xvfb-run -a ruby test/drive_window.rb
 
@@ -23,7 +26,7 @@ app = App.new(settings: settings)
 # building it here first with the same settings the app will use.
 model = WorldModel.new(
   settings:         settings,
-  provider_factory: ->(unit) { FakeProvider.new(unit: unit) },
+  provider_factory: ->(unit) { FakeProvider.new(unit: unit, fail_for: ['Paris']) },
 )
 app.instance_variable_set(:@model, model)
 
@@ -157,5 +160,88 @@ GtkDriver.drive(app, shots: 'tmp/shots', interval: 700) do |d, _app|
       end
       d.shot('08-places', list)
     end
+  end
+
+  d.step('open the hamburger menu') do
+    app.window.city_menu_button.popup
+  end
+
+  d.step('the primary menu is showing') do
+    d.check('the menu popover is visible') { app.window.city_menu_button.popover.visible? }
+    d.shot('09-menu', app.window.city_menu_button.popover)
+  end
+
+  d.step('close the menu and search for a second, failing city') do
+    app.window.city_menu_button.popover.popdown
+    app.window.city_view.info_page.world_view.popup
+    # "paris france" rather than just "paris": the world database also has
+    # Paris-Orly, Paris-Le Bourget Airport and a Paris, Texas, and this has to
+    # land on the one FakeProvider is told to fail.
+    app.window.city_view.info_page.world_view.location_entry.text = 'paris france'
+  end
+
+  d.step('pick Paris from the search results') do
+    app.window.city_view.info_page.world_view.location_entry.selection_model.selected = 0
+  end
+
+  d.step('the fetch for Paris fails') do
+    d.check('weather page still shown') { app.window.stack.visible_child == app.window.city_box }
+    d.check('the place is named Paris') { app.window.city_view.info_page.places_label.label == 'Paris, France' }
+    d.check('two locations are now saved') { model.length == 2 }
+  end
+
+  d.step('the failed fetch lands') do
+    app.window.city_view.then do |view|
+      d.check('info page is showing, not stuck loading') { view.stack.visible_child_name == WeatherView::INFO }
+      d.check('no hourly forecast came back') { !view.info_page.forecast_hourly.has_forecast_info? }
+      d.check('the unavailable label is the first child') { view.info_page.forecast_hourly.box.first_child.is_a?(Gtk::Label) }
+    end
+    d.shot('10-fetch-failed')
+  end
+
+  d.step('switch back to London so Paris is no longer selected') do
+    app.window.city_view.info_page.world_view.popup
+  end
+
+  d.step('pick London from the saved list') do
+    app.window.city_view.info_page.world_view.locations_list_box.then do |list|
+      row = (0...2).map { |i| list.get_row_at_index(i) }.find { |r| r.child.name_label.label == 'London' }
+      list.signal_emit('row-activated', row)
+    end
+  end
+
+  d.step('London is back on screen') do
+    # The world database has more than one "London" (there is one in
+    # Kiribati, not just the UK), and the search used to add it earlier
+    # picked whichever one the tree walk meets first - same as upstream's own
+    # city search, which matches on name alone too. Checking the name is
+    # enough to confirm the row swapped the selected info back.
+    d.check('the place is named London again') { app.window.city_view.info_page.places_label.label.start_with?('London') }
+  end
+
+  d.step('open the places popover to remove Paris') do
+    app.window.city_view.info_page.world_view.popup
+  end
+
+  d.step('Paris is now removable') do
+    app.window.city_view.info_page.world_view.locations_list_box.then do |list|
+      row = (0...2).map { |i| list.get_row_at_index(i) }.find { |r| r.child.name_label.label == 'Paris' }
+      d.check('Paris is in the saved list') { !row.nil? }
+      d.check('its remove button is visible') { row.child.remove_button.visible? }
+      d.shot('11-removable', row.child)
+    end
+  end
+
+  d.step('click Paris\' remove button') do
+    app.window.city_view.info_page.world_view.locations_list_box.then do |list|
+      row = (0...2).map { |i| list.get_row_at_index(i) }.find { |r| r.child.name_label.label == 'Paris' }
+      row.child.remove_button.signal_emit('clicked')
+    end
+  end
+
+  d.step('Paris is gone') do
+    d.check('back down to one saved location') { model.length == 1 }
+    d.check('London is the only one left') { model.recent.location.name == 'London' }
+    d.shot('12-after-remove')
   end
 end

@@ -12,13 +12,21 @@ class FakeProvider
   OFFSET = 3600
   HOURS = 72
 
-  def initialize(unit: 'centigrade', offset: OFFSET, hours: HOURS)
+  # fail_for names places whose fetch raises instead of answering, so a test
+  # can exercise the "could not load" path WeatherInfo falls back to (see
+  # lib/weather_info.rb's #fetch_quietly) without touching the real network.
+  def initialize(unit: 'centigrade', offset: OFFSET, hours: HOURS, fail_for: [])
     @unit = unit
     @offset = offset
     @hours = hours
+    @fail_for = fail_for
   end
 
-  def fetch(_location)
+  def fetch(location)
+    if @fail_for.include?(location.name)
+      raise "simulated network failure for #{location.name}"
+    end
+
     {
       utc_offset: @offset,
       current:    reading(0),
