@@ -119,7 +119,13 @@ Gem::Specification.new do |spec|
   # in this release for current_location_controller.rb to use, so that
   # component is not implemented this round rather than faked against a
   # portal this gem does not expose.
-  spec.add_dependency("ashpd", "~> 1.0")
+  #
+  # The constraint is "~> 0.1", not "~> 1.0": the only release on rubygems is
+  # 0.1.1, and "~> 1.0" cannot resolve against it at all, so `gem install
+  # gnome-weather-rb` would fail dependency resolution even though the gem is
+  # actually wired and loads fine. nix/Gemfile has no version constraint, so
+  # the dev shell's bundle never caught this.
+  spec.add_dependency("ashpd", "~> 0.1")
 
   # NOTE: It is preferable to list development dependencies in the gemspec due to increased
   #       visibility and discoverability.
