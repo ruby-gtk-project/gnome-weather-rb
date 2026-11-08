@@ -3,26 +3,19 @@
 | | |
 |---|---|
 | Upstream | `origin/main` @ `6930d4a` |
-| Port | `ruby` @ `a52fce1` |
+| Port | `ruby` @ `ce70e77` |
 
 This report records the raw inventory step. The judged, axis-by-axis
-comparison (and the unported units) is in `component-parity.md`; this file
+comparison (and the remaining gaps) is in `component-parity.md`; this file
 exists so the counts behind that comparison are reproducible.
 
-## Scan totals (`component-scan.sh`)
-
-| | Upstream | Port |
-|---|---:|---:|
-| Rows | 184 | 141 |
-| Distinct widget types | 29 | 31 |
-| Distinct signals | 19 | 18 |
-| Distinct CSS classes | 20 | 22 |
-
-Widget-type counts alone look close, which is exactly the trap the
-`component-identification` skill warns about: it is a whole-app total, not a
-per-unit comparison, and it hides that four whole upstream units (geolocation,
-shell integration, the background service, the search provider) have no port
-file at all and therefore contribute zero rows to either side.
+Since the last round (`a52fce1`), `ce70e77` ("Port shell integration, search
+provider, and background service") landed three of the four previously-absent
+units: `lib/shell_integration.rb`, `lib/search_provider.rb`,
+`lib/background_service.rb`, plus a rewritten `lib/main.rb` carrying
+`app.show-location`/`app.show-search`. This file's unit table and the
+"Non-widget assets" table below are re-verified against the current tree, not
+carried over from the stale `a52fce1` snapshot.
 
 ## Upstream unit list (one `.ts` class, or `.ts` + `.ui` pair, per unit)
 
@@ -48,76 +41,63 @@ file at all and therefore contribute zero rows to either side.
 | `src/app/thermometer.ts` | `lib/thermometer.rb` | present |
 | `src/shared/world.ts` (`WorldModel`) | `lib/world_model.rb` | present |
 | `src/misc/util.ts` | `lib/util.rb` | present, two helpers not carried over |
-| `src/app/currentLocationController.ts` | — | **absent** |
-| `src/app/shell.ts` + `data/ShellWeatherIntegration.xml` | — | **absent** |
-| `src/service/main.ts` | — | **absent** |
-| `src/service/searchProvider.ts` + `data/ShellSearchProvider2.xml` | — | **absent** |
+| `src/app/shell.ts` + `data/ShellWeatherIntegration.xml` | `lib/shell_integration.rb` | **now present** — see component-parity.md |
+| `src/service/main.ts` | `lib/background_service.rb` | **now present** — see component-parity.md |
+| `src/service/searchProvider.ts` + `data/ShellSearchProvider2.xml` | `lib/search_provider.rb` | **now present**, with gaps — see component-parity.md |
+| `src/app/currentLocationController.ts` | — | **still absent** — no `lib/current_location_controller.rb`, `find lib -iname '*location_controller*'` and `grep -rn Geoclue lib/` both return nothing |
 
-Non-widget assets with their own port-side status, confirmed directly
-(not taken on the existing `.reports/component-inventory.md`'s word):
+Confirmed directly: `lib/location.rb` now backs onto a real `GWeather::Location`
+world tree (the `libgweather` gem's typelib loads and `GWeather::Location.world`
+walks the real database — `flake.nix` wires `libgweather` into `gtkStack` and
+`gnome-weather-rb.gemspec` depends on it `~> 1.0`). This supersedes the prior
+round's framing that "no GWeather [is] reachable": GWeather *is* reachable and
+*is* used for the world database. What is still true, and still a
+correspondence rather than a gap, is that `temperature-unit` does not live in
+`org.gnome.GWeather4`'s schema — it is one of this port's own JSON-backed
+settings (see `lib/settings.rb`'s own comment on this, unchanged this round).
+
+## Non-widget assets
 
 | Upstream asset | Port | Present |
 |---|---|---|
 | `data/style.css`, `style-dark.css`, `style-hc.css` | `lib/styles.rb` (Ruby heredoc, `Gtk::CssProvider`) | yes |
 | `data/org.gnome.Weather.gschema.xml` | `lib/settings.rb` (JSON file, same keys) | yes (substituted storage, same keys — correspondence) |
-| `data/org.gnome.Weather.desktop.in.in` | — | **no** — no desktop file anywhere in the port |
+| `data/ShellWeatherIntegration.xml` | `lib/shell_integration.rb::NODE_XML` | yes, same interface/property names |
+| `data/ShellSearchProvider2.xml` | `lib/search_provider.rb::NODE_XML` | yes, same interface/method names |
+| `data/org.gnome.Weather.desktop.in.in` | — | **no** — still no desktop file anywhere in the port |
 | `data/org.gnome.Weather.metainfo.xml.in.in` | — | **no** |
-| `data/org.gnome.Weather.search-provider.ini.in`, `.service.in`, `BackgroundService.service.in` | — | **no** |
+| `data/org.gnome.Weather.search-provider.ini.in`, `.service.in`, `BackgroundService.service.in` | — | **no** — confirmed: `find . -iname '*.service.in' -o -iname '*.ini.in'` returns nothing in the port. These are what actually let D-Bus *activate* the service/search-provider process on demand; without them, `lib/background_service.rb` only ever runs if something launches `exe/gnome-weather-search-provider` by hand (see `component-parity.md`) |
 | `data/icons/**` (35 status icons + app icons) | — | **no** — confirmed: `find . -ipath '*icons*'` returns nothing in the port tree |
 | `po/` (87 `.po` files, `LINGUAS`) | — | **no** — confirmed: no `po/` directory, no gettext dependency, no `_()`/`gettext` call anywhere in `lib/` |
 | `tests/world_view.py`, `tests/testutil.py` | — | **no**, see `test-parity.md` |
 
-## Missing signals (upstream has, port's scan does not find)
-
-```
-changed::locations
-changed::temperature-unit
-notify::loading
-notify::location
-notify::range
-remove
-```
-
-Read by hand before trusting this list as gaps (per the skill's Step 4):
-`notify::location`, `notify::range` and `remove` are connected inside
-`lib/location_search_entry.rb` / `lib/location_row.rb` / `lib/thermometer.rb`
-using Ruby property-notify idioms the scan's regex does not match (it is a
-scanner miss, not a missing connection — verified by reading the files).
-`changed::locations` and `changed::temperature-unit` are real: they are
-GSettings change signals from the `org.gnome.GWeather4`/`org.gnome.Weather`
-schemas that this port does not mirror into (it keeps its own settings
-store instead, so there is no equivalent signal to connect — see
-`lib/main.rb`'s comment on `temperature-unit`). `notify::loading` is
-connected via `WorldModel#on_loading_changed`, a plain Ruby callback list
-rather than a GObject `notify` signal — a correspondence, not a gap.
-
-## Extra signals (port has, upstream's scan does not find)
-
-```
-notify::dark
-notify::high-contrast
-shutdown
-startup
-unmap
-```
-
-All five are real and are the port substituting `Gtk::Application`'s
-`startup`/`shutdown`/`activate` signals for upstream's `vfunc_startup` /
-`vfunc_shutdown` overrides (Ruby bindings connect by signal where upstream
-overrides a vfunc — a correspondence), plus `Styles` watching
-`Adwaita::StyleManager`'s `notify::dark`/`notify::high-contrast` to swap the
-CSS variant, which is the Ruby equivalent of upstream's
-`Adw.StyleManager.connect('notify::dark', ...)` done the same way on both
-sides.
-
-## CSS classes: upstream has, port's scan does not find
+## CSS classes: upstream has, port does not
 
 ```
 devel
 ```
 
-Read by hand: upstream's `data/window.ui` adds the `devel` class to the
-window root only when the running profile's app id ends in `Devel`. The
-port's `lib/window.rb` has no development-profile distinction at all (no
-`org.gnome.WeatherDevel` application id, no devel icon) — this is a real,
-if minor, gap, not a scanner miss.
+Read by hand, unchanged this round: upstream's `data/window.ui` adds the
+`devel` class to the window root only when the running profile's app id ends
+in `Devel`. `lib/window.rb` and `lib/main.rb` (`APP_ID = 'org.gnome.WeatherRb'`,
+no `Devel` variant anywhere) still have no development-profile distinction —
+real, if minor, gap, carried over unresolved from the previous round.
+
+## New surfaces introduced this round, and what they add to the inventory
+
+- `lib/shell_integration.rb` — 1 exported D-Bus object, 2 properties
+  (`AutomaticLocation`, `Locations`), 1 `PropertiesChanged` signal path, driven
+  by `@settings.watch('locations')` in place of upstream's
+  `changed::locations`.
+- `lib/search_provider.rb` — 1 exported D-Bus object, 5 interface methods
+  (`GetInitialResultSet`, `GetSubsearchResultSet`, `GetResultMetas`,
+  `ActivateResult`, `LaunchSearch`).
+- `lib/background_service.rb` — a second `Gio::Application` process
+  (`org.gnome.WeatherRb.SearchProvider`, `IS_SERVICE`), its own `WorldModel`,
+  one `quit` action, and the two outbound `ActivateAction` calls
+  (`show-location`, `show-search`) back into the windowed app.
+- `exe/gnome-weather-search-provider` — the second process's entry point.
+
+Axis-by-axis comparison of all of the above, including two confirmed gaps
+(a dropped `icon` field on `GetResultMetas`, and no wait on `WorldModel#loading`
+before answering a query), is in `component-parity.md`.

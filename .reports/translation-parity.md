@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | Upstream | `main` @ `6930d4a` |
-| Port | `ruby` @ `a52fce1` |
+| Port | `ruby` @ `ce70e77` |
 | Domain | `gnome-weather` (unconfirmed — read from `meson.project_name()`, no committed `.pot` or `GETTEXT_PACKAGE` to confirm against) |
 | Upstream messages | 49 |
 | Ported | 0 |
@@ -25,11 +25,11 @@ Generated with:
 
 `summary.parity: false` — gaps 49, `languages_missing` all 87, `domain_matches: false`.
 
-## The headline
+## The headline — unchanged since the last round, now re-verified against three new files
 
-The port has **no `po/` directory, no gettext dependency (`gem 'gettext'`,
-`gem 'fast_gettext'` or similar), and zero calls to `_`, `N_`, `n_`, `C_` or
-any other marker** anywhere in `lib/`. Confirmed by direct grep
+The port still has **no `po/` directory, no gettext dependency (`gem
+'gettext'`, `gem 'fast_gettext'` or similar), and zero calls to `_`, `N_`,
+`n_`, `C_` or any other marker** anywhere in `lib/`. Confirmed by direct grep
 (`grep -rn "gettext\|def _\|require 'gettext'" lib/` returns nothing) and by
 the catalogue scan, which returns `messages: 0` for the port tree. Every
 user-visible string in the running app — "Welcome to Weather!", "Search for
@@ -38,6 +38,21 @@ a city or country", button tooltips, the About dialog's strings, the
 literal. This is not "translation not finished yet"; per the skill, that
 phrase is itself a gap wearing a justification. The port is English-only,
 today, for all 87 languages upstream already ships.
+
+This round added `lib/shell_integration.rb`, `lib/search_provider.rb` and
+`lib/background_service.rb`, which carry two of upstream's existing 49
+messages between them (`src/service/searchProvider.ts:214`'s `_('%s, %s')`,
+reused by `lib/search_provider.rb`'s `description_for` as a bare
+`format('%s, %s', ...)` call with no marker, and `src/service/main.ts:50`'s
+`_('Weather')`, reused by `lib/background_service.rb`'s
+`GLib.application_name = 'Weather'`, also bare). Both were already counted
+as gaps in the upstream catalogue before this round's work landed (confirmed:
+`grep -n 'searchProvider.ts:214\|service/main.ts:50'
+.reports/upstream-catalogue.yaml` finds both occurrences already on record),
+so this round changes neither the 49/0 message count nor the gap list — it
+just confirms the new Ruby call sites repeat the same unmarked-literal
+pattern as everywhere else in this port, rather than introducing a second,
+undiscovered class of gap.
 
 ## Upstream catalogue
 
@@ -73,11 +88,17 @@ languages: { count: 0, list: [] }
 
 Per `component-identification.md`, the port has no `.desktop` file, no
 `.metainfo.xml`, and no `.gschema.xml` — none of those three files exist
-anywhere in the port tree. So even closing every string-literal gap in
-`lib/` would still leave the desktop/metainfo/schema strings with nowhere to
-live. That is simultaneously a translation gap and the component gap
-`component-parity.md` already names; it is tracked once here as the reason
-those rows cannot move past "gap" without component work landing first.
+anywhere in the port tree, still true after this round's work. So even
+closing every string-literal gap in `lib/` would still leave the
+desktop/metainfo/schema strings with nowhere to live. That is simultaneously
+a translation gap and the component gap `component-parity.md` already names;
+it is tracked once here as the reason those rows cannot move past "gap"
+without component work landing first. The two new `.xml` node definitions
+this round added (`ShellWeatherIntegration.xml`'s and
+`ShellSearchProvider2.xml`'s interface descriptions, now inlined as
+`NODE_XML` heredocs in `lib/shell_integration.rb` and
+`lib/search_provider.rb`) carry no translatable strings on either side —
+D-Bus introspection XML has none — so they do not change this section.
 
 ## Closing this
 
@@ -106,4 +127,5 @@ Per the skill's four-line discipline, nothing has been done yet:
 `summary.parity: false`. This is not "English-only for now" — the 87
 languages exist today, in the same repository, on `origin/main`, and
 shipping without them is a regression the port introduces by never having
-wired gettext in the first place.
+wired gettext in the first place. Unchanged by this round's component work:
+three new files landed, zero new translation markers landed with them.
