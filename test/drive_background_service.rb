@@ -82,8 +82,14 @@ SERVICE_PATH = '/org/gnome/WeatherRb/SearchProvider'
 # is a chain of completion callbacks rather than a straight line of calls.
 def async_call(connection, name, path, interface, method_name, parameters, reply_type, &on_done)
   connection.call(name, path, interface, method_name, parameters, reply_type, Gio::DBusCallFlags::NONE, -1, nil) do |c, r|
-    on_done.call(c.call_finish(r))
+    begin
+      on_done.call(c.call_finish(r))
+    rescue => e
+      STDERR.puts "ASYNC_CALL_EXC #{method_name}: #{e.class}: #{e.message}"
+    end
   end
+rescue => e
+  STDERR.puts "SYNC_CALL_EXC #{method_name}: #{e.class}: #{e.message}"
 end
 
 GLib::Timeout.add(500) do
@@ -103,6 +109,21 @@ GLib::Timeout.add(500) do
     # added after London), so Paris is index 0, not 1.
     check('GetInitialResultSet over the real bus found one result') { ids == ['0'] }
 
+    # GetSubsearchResultSet's reply, like GetInitialResultSet's, is a plain
+    # (as) tuple — no dictionary involved — so it round-trips over the real
+    # connection with no blocker.
+    async_call(
+      client_connection,
+      SERVICE_NAME,
+      SERVICE_PATH,
+      'org.gnome.Shell.SearchProvider2',
+      'GetSubsearchResultSet',
+      GLib::Variant.parse('(["0", "1"], ["paris"])', '(asas)'),
+      GLib::VariantType.new('(as)'),
+    ) do |subsearch_result|
+      check('GetSubsearchResultSet over the real bus narrows to Paris') { subsearch_result.first == ['0'] }
+    end
+
     # GetResultMetas's own reply (aa{sv}, a dictionary nested in an array) is
     # not exercised over this real connection: these bindings cannot
     # deep-unpack a GVariant dictionary back to Ruby at all (confirmed with
@@ -110,7 +131,9 @@ GLib::Timeout.add(500) do
     # "TODO: GVariant({sv}) -> Ruby"), which would break every search
     # provider's GetResultMetas caller in this same way, not just this one.
     # test/check_search_provider.rb exercises #result_metas directly instead,
-    # the same content this method puts into that reply.
+    # the same content this method puts into that reply. Tracked as an
+    # upstream (ruby-gnome) binding gap, not something this port's own test
+    # harness can work around.
     async_call(
       client_connection,
       SERVICE_NAME,
@@ -130,11 +153,49 @@ GLib::Timeout.add(3500) do
     app.window.stack.visible_child == app.window.city_box && app.window.city_view.info&.location&.name == 'Paris'
   end
 
-  loop.quit
+  # Fired only after ActivateResult's effect is confirmed above, so the two
+  # calls' effects on the one shared window do not race each other: upstream's
+  # onShowLocation and onShowSearch are two independent actions on the same
+  # app, not a sequence, but exercising them back to back here needs an order.
+  async_call(
+    client_connection,
+    SERVICE_NAME,
+    SERVICE_PATH,
+    'org.gnome.Shell.SearchProvider2',
+    'LaunchSearch',
+    GLib::Variant.parse('(["par", "is"], 0)', '(asu)'),
+    nil,
+  ) { nil }
+
+  # LaunchSearch's own reply reaching the client (above) proves only the
+  # first of two hops: the service still has to relay it on to the windowed
+  # app over its own ActivateAction call, a second, independent async round
+  # trip the service does not wait for before replying. Polling rather than
+  # a single fixed delay is what keeps this check from being a coin flip on
+  # a loaded machine (a single fixed 2-second margin after the dispatch above
+  # failed intermittently while developing this check).
+  tries = 0
+  GLib::Timeout.add(200) do
+    tries += 1
+    landed = app.window.stack.visible_child == app.window.search_view
+
+    if landed || tries >= 40
+      # Window#show_search discards its text argument, matching upstream's
+      # own showSearch(_text?: string) — so the only observable effect of
+      # LaunchSearch reaching the app is the welcome/search page coming to
+      # the front.
+      check('LaunchSearch reached the windowed app over ActivateAction') { landed }
+      loop.quit
+      false
+    else
+      true
+    end
+  end
+
   false
 end
 
-GLib::Timeout.add(10_000) { loop.quit; false }
+GLib::Timeout.add(15_000) { loop.quit; false }
 loop.run
 
 puts

@@ -34,11 +34,12 @@ class Window
     'refresh' => ['F5', '<Control>r'],
   }.freeze
 
-  def initialize(app, model, settings, version:)
+  def initialize(app, model, settings, version:, app_id: 'org.gnome.WeatherRb')
     @app = app
     @model = model
     @settings = settings
     @version = version
+    @app_id = app_id
   end
 
   def build
@@ -134,6 +135,11 @@ class Window
       win.icon_name = ICON_NAME
       win.set_default_size(DEFAULT_WIDTH, DEFAULT_HEIGHT)
       @settings.apply_to(win)
+
+      # Upstream's `if (pkg.name?.endsWith('Devel')) { ctx.add_class('devel') }`.
+      if @app_id.end_with?('Devel')
+        win.add_css_class('devel')
+      end
     end
   end
 

@@ -20,6 +20,8 @@ require_relative '../lib/search_provider'
 FakeModel = Struct.new(:infos) do
   def all = infos
   def at_index(index) = infos[index]
+  def loading? = false
+  def on_loading_changed(&block) = block
 end
 
 def info_for(name, country, code: 0)
@@ -99,6 +101,36 @@ check('result_metas has one entry for Paris') { metas.length == 1 }
 check('the meta carries the id') { metas.first['id'] == '1' }
 check('the meta names the city') { metas.first['name'] == 'Paris' }
 check('the meta describes the conditions and temperature') { metas.first['description'] == 'Clear, 14°' }
+check('the meta carries a themed icon variant, matching the widget\'s icon name') do
+  icon = metas.first['icon']
+  icon.is_a?(GLib::Variant) && icon.to_s == "('themed', <['weather-clear-symbolic', 'weather-clear']>)"
+end
+
+check('a query run while the model is loading waits for notify::loading to clear') do
+  loading_model = Struct.new(:infos) do
+    attr_accessor :loading_flag
+    def all = infos
+    def at_index(index) = infos[index]
+    def loading? = loading_flag
+    def on_loading_changed(&block)
+      (@listeners ||= []) << block
+      block
+    end
+
+    def finish_loading!
+      self.loading_flag = false
+      @listeners.each { |l| l.call(false) }
+    end
+  end.new(model.infos)
+  loading_model.loading_flag = true
+
+  waiting_provider = SearchProvider.new(loading_model)
+  result = nil
+  waiting_provider.initial_result_set(['london']) { |ids| result = ids }
+  still_nil_while_loading = result.nil?
+  loading_model.finish_loading!
+  still_nil_while_loading && result == ['0', '4']
+end
 
 provider.activate_result('1', [], 0)
 check('ActivateResult calls back with the Paris location') { activated&.name == 'Paris' }

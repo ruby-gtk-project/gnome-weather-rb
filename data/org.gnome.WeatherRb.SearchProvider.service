@@ -1,0 +1,20 @@
+# D-Bus session-bus activation file for the background service
+# (lib/background_service.rb, exe/gnome-weather-search-provider), the process
+# GNOME Shell starts the first time it needs this app's search provider with
+# no copy of the windowed app already running.
+#
+# Ported from upstream's data/org.gnome.Weather.BackgroundService.service.in.
+# Upstream's bus name is @APP_ID@.BackgroundService, substituted by meson;
+# this port's background service already runs under its own, fixed id —
+# BackgroundService::APP_ID in lib/background_service.rb — so that id is used
+# here directly rather than inventing a second one meson would have had to
+# substitute.
+#
+# Exec names the bare executable rather than an absolute @DATA_DIR@ path:
+# this port installs as a RubyGems gem (gnome-weather-rb.gemspec), which has
+# no equivalent fixed data directory — `gem install` puts exe/ on the
+# installing Ruby's bindir, which is on PATH, the way any gem's executables
+# are found.
+[D-BUS Service]
+Name=org.gnome.WeatherRb.SearchProvider
+Exec=gnome-weather-search-provider

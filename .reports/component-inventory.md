@@ -1,5 +1,15 @@
 # gnome-weather-rb — upstream component inventory
 
+> **Superseded.** This file is a legacy, non-skill report frozen at the
+> `ce70e77`/`a52fce1` era of the port. In particular, its claim below that
+> `shell_integration.rb`/`background_service.rb`/`search_provider.rb` are
+> "Absent" is now false — all three landed in `ce70e77` ("Port shell
+> integration, search provider, and background service") and are exercised
+> live by `test/drive_dbus_integration.rb` and `test/drive_background_service.rb`.
+> For the current component-by-component state, read
+> `.reports/component-identification.md` and `.reports/component-parity.md`
+> instead; those are regenerated each round and this file is not.
+
 Survey of `origin/main` (GNOME Weather, GJS/TypeScript + GtkBuilder `.ui`)
 against `lib/` on the `ruby` branch. Re-surveyed after the window, forecast
 pages and world model landed: the whole user-facing app is now present on the

@@ -1,0 +1,12 @@
+# D-Bus session-bus activation file for the windowed app itself
+# (lib/main.rb, exe/gnome-weather) — what lets
+# org.freedesktop.Application.ActivateAction reach App#action_show_location/
+# App#action_show_search even when no window is open yet, exactly the call
+# lib/background_service.rb's call_main_app_action makes.
+#
+# Ported from upstream's data/org.gnome.Weather.service.in. See
+# org.gnome.WeatherRb.SearchProvider.service, right beside this file, for why
+# Exec names a bare executable rather than an absolute @DATA_DIR@ path.
+[D-BUS Service]
+Name=org.gnome.WeatherRb
+Exec=gnome-weather --gapplication-service

@@ -78,6 +78,24 @@ GtkDriver.drive(app, shots: 'tmp/shots', interval: 700) do |d, _app|
     d.shot('02-hourly')
   end
 
+  # Upstream's tests/world_view.py (dogtail-gated, so not runnable here): with
+  # a location on screen, it asserts places/refresh showing, the world view
+  # popover not showing, the city view showing, and the current-conditions,
+  # weekly-forecast and forecast widgets all showing. This step is this
+  # port's named counterpart, over the same widget tree rather than
+  # accessibility names.
+  d.step("world_view.py's basic-state and forecast assertions") do
+    app.window.city_view.info_page.then do |page|
+      d.check('places button showing (world_view.py: places_button.showing)') { page.places_button.visible? }
+      d.check('refresh button showing (world_view.py: refresh_button.showing)') { app.window.refresh_button.visible? && app.window.refresh_revealer.reveal_child? }
+      d.check('places popover not showing (world_view.py: not world_view.showing)') { !page.world_view.visible? }
+      d.check('city view showing (world_view.py: city_view.showing)') { app.window.stack.visible_child == app.window.city_box }
+      d.check('current conditions showing (world_view.py: current_conditions.showing)') { page.conditions_grid.visible? }
+      d.check('weekly forecast showing (world_view.py: weekly_forecast.showing)') { page.forecast_stack.visible? }
+      d.check('forecast showing (world_view.py: forecast.showing)') { page.forecast_overlay.visible? }
+    end
+  end
+
   d.step('the hourly page has hours in it') do
     app.window.city_view.info_page.forecast_hourly.then do |hourly|
       d.check('hourly entries were built') { hourly.has_forecast_info? }

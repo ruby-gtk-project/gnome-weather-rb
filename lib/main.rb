@@ -39,6 +39,16 @@ require_relative 'shell_integration'
 #
 class App
   APP_ID = 'org.gnome.WeatherRb'
+
+  # Upstream's Devel profile, built by meson as a second application id
+  # (`@app_id@.Devel`) with its own desktop file and icon; window.ts reads
+  # `pkg.name?.endsWith('Devel')` off that build-time id to add the 'devel'
+  # CSS class the Devel icon's own style depends on. This port has no meson
+  # profile build to substitute an id at packaging time, so the choice is
+  # made at process start instead, off GNOME_WEATHER_APP_ID — unset, or any
+  # other value, keeps the normal id.
+  DEVEL_APP_ID = "#{APP_ID}.Devel"
+
   VERSION = Gnome::Weather::Rb::VERSION
 
   APP_ACTIONS = {
@@ -49,8 +59,9 @@ class App
 
   TEMPERATURE_UNIT = 'temperature-unit'
 
-  def initialize(settings: nil)
+  def initialize(settings: nil, devel: ENV['GNOME_WEATHER_APP_ID'] == DEVEL_APP_ID)
     @settings = settings || Settings.new
+    @app_id = devel ? DEVEL_APP_ID : APP_ID
   end
 
   def build
@@ -64,7 +75,7 @@ class App
   def app
     @app ||= begin
       Adwaita.init
-      Gtk::Application.new(APP_ID, :default_flags)
+      Gtk::Application.new(@app_id, :default_flags)
     end
   end
 
@@ -78,6 +89,7 @@ class App
       model,
       @settings,
       version: VERSION,
+      app_id:  @app_id,
     )
   end
 

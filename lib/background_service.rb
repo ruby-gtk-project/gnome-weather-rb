@@ -101,25 +101,31 @@ class BackgroundService
       )
     end
 
-    def launch_main_app_search(text) = call_main_app_action('show-search', "\"#{escape(text)}\"")
+    # App's show-search action declares its own parameter_type as plain 's'
+    # (lib/main.rb), unlike show-location's 'v', so this one needs only the
+    # single variant wrap ActivateAction's own 'av' transport adds — see
+    # call_main_app_action's comment for why show-location needs a second one.
+    def launch_main_app_search(text) = call_main_app_action('show-search', "\"#{escape(text)}\"", double_wrap: false)
 
     def escape(value) = value.to_s.gsub('\\') { '\\\\' }.gsub('"') { '\\"' }
 
     # ActivateAction's own signature is (s action_name, av parameter, a{sv}
-    # platform_data). parameter is "zero or one value of type v"; since the
-    # action on the other end declares its own parameter_type as 'v' too (see
-    # lib/main.rb), the payload is wrapped twice — once for the action's own
-    # 'v' parameter type, once more for ActivateAction's 'av' transport —
-    # which is what upstream's `new GLib.Variant('v', ...)` produces for a
-    # GJS variant explicitly typed 'v'. GVariant text's `<<value>>` is that
-    # double wrap.
-    def call_main_app_action(action_name, value_text)
+    # platform_data). parameter is "zero or one value of type v". show-location
+    # declares its own parameter_type as 'v' too (see lib/main.rb), so *its*
+    # payload is wrapped twice — once for the action's own 'v' parameter type,
+    # once more for ActivateAction's 'av' transport — which is what upstream's
+    # `new GLib.Variant('v', ...)` produces for a GJS variant explicitly typed
+    # 'v'. GVariant text's `<<value>>` is that double wrap; double_wrap: false
+    # is the plain single `<value>` every other action's own parameter_type
+    # needs.
+    def call_main_app_action(action_name, value_text, double_wrap: true)
+      wrapped = double_wrap ? "<<#{value_text}>>" : "<#{value_text}>"
       app.dbus_connection&.call(
         MAIN_APP_ID,
         MAIN_APP_PATH,
         'org.freedesktop.Application',
         'ActivateAction',
-        GLib::Variant.parse(format('("%s", [<<%s>>], @a{sv} {})', action_name, value_text), '(sava{sv})'),
+        GLib::Variant.parse(format('("%s", [%s], @a{sv} {})', action_name, wrapped), '(sava{sv})'),
         nil,
         Gio::DBusCallFlags::NONE,
         -1,
