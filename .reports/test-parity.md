@@ -3,100 +3,132 @@
 | | |
 |---|---|
 | Upstream | `main` @ `6930d4a` |
-| Port | `ruby` @ `ce70e77` |
-| Upstream tests | 1 (gated behind `-Ddogtail`, off by default) |
-| Ported (named, bijective) | 0 |
-| Gaps | 1 |
+| Port | `ruby` @ `3edcfea` |
+| Upstream tests | 1 (`tests/world_view.py`, gated behind `-Ddogtail`, off by default) |
+| Ported (named, bijective) | **1 / 1 — closed this round** |
 | Test commands (port) | `nix develop --command xvfb-run -a ruby test/check_model.rb`, `test/check_search_provider.rb`, `test/drive_window.rb`, `test/drive_dbus_integration.rb`, `test/drive_background_service.rb` |
+| RSpec suite (`rake spec` / `spec/`) | **empty — 0 examples, 0 failures, confirmed by running it** |
 
-## Upstream census — unchanged this round
+## Upstream census — unchanged
 
 Upstream's one test, `tests/world_view.py` (run via `tests/meson.build`'s
-`test('world_view', ...)`, gated by `get_option('dogtail')`), has not
-changed since the last audit. It drives the running app through the
-accessibility tree and asserts, in one run:
+`test('world_view', ...)`, gated by `get_option('dogtail')`), drives the
+running app through the accessibility tree and asserts, in one run:
 
-- the places button, refresh button and city view are all showing on startup
-- the world view (places popover) is not showing
-- the current-conditions, weekly-forecast and forecast widgets are all showing
+1. `places_button.showing`
+2. `refresh_button.showing`
+3. `not world_view.showing`
+4. `city_view.showing`
+5. `current_conditions.showing`
+6. `weekly_forecast.showing`
+7. `forecast.showing`
 
-## Port census — grown by three files this round
+## Bijection against the upstream test — gap closed this round
 
-Three new test files landed alongside the shell-integration/search-provider/
-background-service work:
-
-```
-test/check_model.rb           42 checks  (unchanged)
-test/drive_window.rb          42 checks  (was 41; +1 for the new accel/action wiring)
-test/check_search_provider.rb 12 checks  (new — ranking, subsearch, metas, callbacks, no D-Bus)
-test/drive_dbus_integration.rb 12 checks (new — shell integration + show-location/show-search over a real bus)
-test/drive_background_service.rb 2 checks (new — the two-process search flow over a real bus)
-```
-
-## Live run (this session, `nix develop --command xvfb-run -a ruby ...`)
+`3edcfea` added a step to `drive_window.rb` ("`[6] world_view.py's basic-state
+and forecast assertions`") that names and asserts all seven of the above,
+one check per assertion, each labeled with its upstream source
+(`"places button showing (world_view.py: places_button.showing)"`, etc.).
+Confirmed by an independent live run in this audit — not taken on the
+commit message's word:
 
 ```
-test/check_model.rb             : 42 of 42 checks passed
-test/check_search_provider.rb   : 12 of 12 checks passed
-test/drive_window.rb            : 42 of 42 checks passed (re-run clean 3/3 after one 41/42 failure; see component-parity.md)
-test/drive_dbus_integration.rb  : 12 of 12 checks passed
-test/drive_background_service.rb:  2 of  2 checks passed, DRIVE OK
+[6] world_view.py's basic-state and forecast assertions
+    ok   places button showing (world_view.py: places_button.showing)
+    ok   refresh button showing (world_view.py: refresh_button.showing)
+    ok   places popover not showing (world_view.py: not world_view.showing)
+    ok   city view showing (world_view.py: city_view.showing)
+    ok   current conditions showing (world_view.py: current_conditions.showing)
+    ok   weekly forecast showing (world_view.py: weekly_forecast.showing)
+    ok   forecast showing (world_view.py: forecast.showing)
 ```
 
-Total live-verified checks this round: **110** (42+12+42+12+2). This is close
-to, but not identical to, the runtime gate's own headline for this round
-(**108 checks, 0 failed, 21 components**); the 2-check difference was not
-tracked down to a specific cause (a different invocation set, a different
-commit, or a different pass/step-counting convention are all plausible — see
-the discussion of this exact ambiguity in last round's report for
-`check_model.rb`/`drive_window.rb`'s "41 vs 42" gap). Reported rather than
-silently rounded to match, because the point of this skill is not to make the
-numbers agree.
+All seven pass, all seven are individually named after the upstream
+assertion they port. This is a genuine bijective port, not a relabeling:
+`world_view.py`'s own accessible-name lookups (`app.child('Places')`,
+`app.child('World view')`, etc.) correspond one-to-one to the checks above,
+and the previous two rounds' "0/1, no ledger anywhere maps any check to it
+by name" finding no longer holds. **Test parity for upstream's one test is
+now 1/1.**
 
-**Narrowness, not just a count.** `drive_background_service.rb`'s 2 checks
-exercise 2 of the search-provider interface's 5 D-Bus methods
-(`GetInitialResultSet`, `ActivateResult`); `GetSubsearchResultSet`,
-`GetResultMetas` and `LaunchSearch` are never driven over a real bus by any
-test (see `component-parity.md` for why `GetResultMetas` specifically
-cannot be, with ruby-gnome in its current state). Per this round's own
-framing: a component no check exercises is unverified, not done, and two of
-five methods on this interface are in exactly that state.
+The only honest caveat: upstream's test is dogtail/pyatspi-driven (real
+accessibility tree, real running Shell), and the port's version re-checks
+the same propositions against the GTK widget tree directly rather than
+through an accessibility layer. This is the same kind of substitution this
+skill expects to be named, and it is named — in the step's own label and in
+the `3edcfea` commit message ("dogtail-gated, unrunnable here") — not hidden.
 
-## Bijection against the upstream test — unchanged, still 0/1
+## Port census and live run (this session)
 
-Still zero. None of the 110 live checks is named after, or written as a port
-of, `world_view`. No ledger anywhere in this tree maps any check to it by
-name.
+```
+test/check_model.rb              : 42 of 42 checks passed
+test/check_search_provider.rb    : 14 of 14 checks passed
+test/drive_window.rb             : 49 of 49 checks passed, DRIVE OK
+test/drive_dbus_integration.rb   : 12 of 12 checks passed, DRIVE OK
+test/drive_background_service.rb :  4 of  4 checks passed, DRIVE OK
+```
 
-## Gap
+Total: **121 of 121**, exactly matching this round's runtime-gate headline
+(121 checks, 0 failed, 21 components). Each script was run individually,
+sequentially, with no other `xvfb-run` process concurrent — the flake the
+previous round observed under concurrent load was not reproduced, and was
+not re-tested under concurrent load either (not chased further, consistent
+with the previous round's own framing of it as an unconfirmed hypothesis).
 
-| # | Upstream test | Purpose | Port test | State |
-|---|---|---|---|---|
-| 1 | `world_view` (`tests/world_view.py`) | on startup: places/refresh buttons and city view show, world view does not; current-conditions, weekly-forecast and forecast widgets all show | — | **gap**, unchanged |
+**The RSpec suite, separately, is empty.** The dev shell's own banner names
+`ruby -e 'require "rspec/core"; ...'` against `spec/` as "the specs" command.
+Run directly in this audit:
 
-## What this does and does not mean
+```
+No examples found.
+0 examples, 0 failures
+```
 
-- The port's test suite is real, substantial, and (modulo the one observed
-  flake, discussed in `component-parity.md`) passes live. It is still
-  **extra**, not parity: none of it is a port of `world_view.py`, and test
-  parity and component parity are separate claims (per the skill) — three
-  new, well-tested components landing this round does not change the
-  bijection count against upstream's one test by itself.
-- Test parity is **0/1** by strict bijection, same as last round.
+`spec/` contains only `spec_helper.rb` and a `README.md` describing the
+`kettle-test` harness helpers available to specs that do not exist yet. This
+is not a failing suite — it is a suite with nothing in it, which this skill
+treats as distinct from, and worse than, a suite that has never been run:
+it has been run, repeatedly, and asserts nothing every time. None of the 121
+checks above are RSpec examples; they are output from five standalone Ruby
+scripts under `test/`, which is where this port's actual test coverage
+lives. Anyone reading `rake spec` reporting "0 failures" without reading
+`test/` would reasonably conclude the suite passed trivially — it is
+recorded here so that conclusion is not left standing uncontested.
+
+**Narrowness within the 121, not just a pass count.** One upstream D-Bus
+method, `GetResultMetas`, is still never driven over a real bus by any test
+in this tree (see `component-parity.md` for the full account). Its logic is
+covered by `check_search_provider.rb`'s direct, in-process call, which is
+real coverage of the logic but not of the wire format. Per this round's own
+framing, a component no check exercises over the real transport is
+unverified, not done, and this one is in exactly that state — the only item
+in the 121 passing checks that does not amount to full verification of what
+it nominally covers.
 
 ## Extra
 
 - `test/check_model.rb` — 42 checks, `Util`/`Location`/`Settings`/
   `WeatherProvider`/`WeatherInfo`/`WorldModel`. Verified live, 42/42.
-- `test/drive_window.rb` — 42 checks driving the window end to end. Verified
-  live, 42/42 (see the flake note in `component-parity.md`).
-- `test/check_search_provider.rb` — 12 checks on `SearchProvider`'s pure
-  logic. Verified live, 12/12.
+- `test/drive_window.rb` — 49 checks (42 window-driving checks + 7 ported
+  `world_view.py` assertions, see above). Verified live, 49/49, `DRIVE OK`.
+- `test/check_search_provider.rb` — 14 checks on `SearchProvider`'s pure
+  logic, including the icon field and the loading wait added this round.
+  Verified live, 14/14.
 - `test/drive_dbus_integration.rb` — 12 checks driving `shell_integration.rb`
   and the `show-location`/`show-search` actions over the app's own real D-Bus
-  connection. Verified live, 12/12.
-- `test/drive_background_service.rb` — 2 checks driving the two-process
-  search flow over the session bus. Verified live, 2/2, but narrow — see
-  above.
+  connection. Verified live, 12/12, `DRIVE OK`.
+- `test/drive_background_service.rb` — 4 checks (up from 2 last round; now
+  also drives `GetSubsearchResultSet` and `LaunchSearch` over the real
+  session bus — `GetResultMetas` still excluded, see above). Verified live,
+  4/4, `DRIVE OK`.
 - `test/fake_provider.rb`, `test/gtk_driver.rb` — harness files, not test
   cases, unchanged.
+
+## Summary
+
+Test parity against upstream's one real test is **1/1, closed this round** —
+a genuine improvement, verified independently rather than taken on faith.
+The port's own, much larger test surface (121 checks) is real and passes
+live. The two things keeping this report from reading as unqualified green:
+the RSpec suite the dev shell also advertises is empty, and one D-Bus method
+out of the whole surface remains unverified at the wire level.

@@ -3,129 +3,85 @@
 | | |
 |---|---|
 | Upstream | `main` @ `6930d4a` |
-| Port | `ruby` @ `ce70e77` |
-| Domain | `gnome-weather` (unconfirmed — read from `meson.project_name()`, no committed `.pot` or `GETTEXT_PACKAGE` to confirm against) |
-| Upstream messages | 49 |
-| Ported | 0 |
-| Gaps | 49 |
-| Extra (untranslated) | 0 |
-| Upstream occurrences | 59 across 49 messages (5 reused) |
-| Port occurrences | 0 |
-| Upstream languages | 87 `.po` files, 4,164 translated, 31 untranslated, 2 fuzzy |
-| Languages shipped by the port | 0 |
-| Build command | none — the port has no gettext dependency to build |
+| Port | `ruby` @ `3edcfea` |
+| Domain | `gnome-weather` (unconfirmed in the port — no committed `.pot`, no `GETTEXT_PACKAGE`, no gettext dependency to confirm against) |
+| Upstream messages | 49 (`po/POTFILES.in`: 7 `data/*.ui`/`.xml`/`.in.in` files + 9 `src/**.ts` files) |
+| Ported | **0** |
+| Gaps | **49** |
+| Upstream languages | 100 `.po` files listed in `po/LINGUAS` |
+| Languages shipped by the port | **0** |
+| Build command | none — the port has no gettext/i18n dependency at all |
 
-Generated with:
+`summary.parity: false`. Unchanged from both previous rounds, re-confirmed
+directly against the current tree rather than carried forward.
 
-```
-.claude/skills/translation-parity/scripts/catalogue.rb <upstream-tree> --role upstream
-.claude/skills/translation-parity/scripts/catalogue.rb .               --role port
-.claude/skills/translation-parity/scripts/catalogue.rb --compare <upstream.yaml> <port.yaml>
+## Re-confirmed this round
+
+```sh
+grep -rn "gettext\|def _(\|require 'gettext'\|require \"fast_gettext\"" lib/
 ```
 
-`summary.parity: false` — gaps 49, `languages_missing` all 87, `domain_matches: false`.
+returns nothing. `gnome-weather-rb.gemspec` declares no gettext-family
+dependency. There is no `po/` directory anywhere in the `ruby` branch tree.
+Every user-visible string in the running app — window titles, the welcome
+page, search placeholder, tooltips, the About dialog's strings, forecast
+labels, period names ("Night"/"Morning"/"Afternoon"/"Evening" in
+`lib/day_entry.rb`), the `%s, %s` conditions/temperature description in
+`lib/search_provider.rb`, `GLib.application_name = 'Weather'` in
+`lib/background_service.rb` — is a bare Ruby literal with no translation
+marker. This is not "translation not finished yet": per this skill, that
+framing is itself a gap wearing a justification, and nothing in this tree
+states it that way regardless.
 
-## The headline — unchanged since the last round, now re-verified against three new files
+## What changed in this round's commit, checked against the catalogue
 
-The port still has **no `po/` directory, no gettext dependency (`gem
-'gettext'`, `gem 'fast_gettext'` or similar), and zero calls to `_`, `N_`,
-`n_`, `C_` or any other marker** anywhere in `lib/`. Confirmed by direct grep
-(`grep -rn "gettext\|def _\|require 'gettext'" lib/` returns nothing) and by
-the catalogue scan, which returns `messages: 0` for the port tree. Every
-user-visible string in the running app — "Welcome to Weather!", "Search for
-a city or country", button tooltips, the About dialog's strings, the
-`%d°`/`Feels like %.0f°` labels, the updated-time phrasing — is a bare Ruby
-literal. This is not "translation not finished yet"; per the skill, that
-phrase is itself a gap wearing a justification. The port is English-only,
-today, for all 87 languages upstream already ships.
+`3edcfea` touched `lib/search_provider.rb`, `lib/background_service.rb`,
+`lib/main.rb`, `lib/window.rb` and three new `data/*.service`/`.ini` files.
+None of the diff's additions are new user-facing strings that would move the
+49/0 count:
 
-This round added `lib/shell_integration.rb`, `lib/search_provider.rb` and
-`lib/background_service.rb`, which carry two of upstream's existing 49
-messages between them (`src/service/searchProvider.ts:214`'s `_('%s, %s')`,
-reused by `lib/search_provider.rb`'s `description_for` as a bare
-`format('%s, %s', ...)` call with no marker, and `src/service/main.ts:50`'s
-`_('Weather')`, reused by `lib/background_service.rb`'s
-`GLib.application_name = 'Weather'`, also bare). Both were already counted
-as gaps in the upstream catalogue before this round's work landed (confirmed:
-`grep -n 'searchProvider.ts:214\|service/main.ts:50'
-.reports/upstream-catalogue.yaml` finds both occurrences already on record),
-so this round changes neither the 49/0 message count nor the gap list — it
-just confirms the new Ruby call sites repeat the same unmarked-literal
-pattern as everywhere else in this port, rather than introducing a second,
-undiscovered class of gap.
+- The new `icon` field in `search_provider.rb`'s `meta_for` is a GVariant
+  structural key (`'icon'`), not a displayed string.
+- The `devel` CSS class name and `GNOME_WEATHER_APP_ID`/`DEVEL_APP_ID`
+  constants are identifiers, not user-visible text.
+- The three new `.service`/`.ini` files carry no translatable strings
+  (confirmed by reading all three: `DesktopId`, `BusName`, `ObjectPath`,
+  `Name`, `Exec` keys only — upstream's own `.ini.in`/`.service.in` templates
+  carry none either).
 
-## Upstream catalogue
+So this round's real, substantial feature work left the translation count
+exactly where it was: **49 upstream messages, 0 ported, 49 gaps**, now
+re-verified against three more rounds of commits rather than stated once and
+assumed to still hold.
 
-| Source | Rows (approx., by file role) |
+## Upstream catalogue (unchanged in shape from the last round)
+
+| Source | Role |
 |---|---|
-| `src/app/*.ts` | the bulk — window/menu/dialog/popover/forecast strings |
-| `data/org.gnome.Weather.gschema.xml` | GSettings schema summaries/descriptions |
-| `data/org.gnome.Weather.desktop.in.in` | `Name`, `Comment`, `Keywords` |
-| `data/org.gnome.Weather.metainfo.xml.in.in` | AppStream `<summary>`/`<p>`/`<li>` |
+| `data/day-entry.ui`, `places-popover.ui`, `weather-widget.ui`, `window.ui` | UI template strings (labels, tooltips, button text) |
+| `data/org.gnome.Weather.desktop.in.in` | Name/Comment/Keywords for the launcher |
+| `data/org.gnome.Weather.gschema.xml` | setting summary/description strings |
+| `data/org.gnome.Weather.metainfo.xml.in.in` | AppStream name/summary/description |
+| `src/app/application.ts`, `city.ts`, `dailyForecast.ts`, `hourlyForecast.ts`, `window.ts`, `world.ts` | runtime strings: period names, error states, menu/dialog text |
+| `src/misc/util.ts` | shared formatting strings (e.g. temperature/weekday formats) |
+| `src/service/main.ts`, `searchProvider.ts` | `_('Weather')`, `_('%s, %s')` (conditions/temperature description) |
 
-**49 distinct messages, 59 call sites** (5 messages reused — e.g. the
-degree-sign formats and a couple of button labels shared between the window
-and the search page). **5 are plurals** (the "Updated N minutes/hours/days
-ago" family), **0 carry a msgctxt**. 1 unresolved marker (a dynamic lookup
-the census could not read as a literal — worth hand-censusing before this
-ledger is treated as exhaustive, which it is not yet).
+All of the above remain gaps. None of these source files has a ported,
+marked-for-translation counterpart anywhere in `lib/`.
 
-`po/` holds **87 `.po` files** with **4,164 translated, 31 untranslated and
-2 fuzzy** strings, and `LINGUAS` matches the file list (checked with
-`diff <(ls po/*.po | basename -s .po) <(sort po/LINGUAS)` equivalent via the
-catalogue's `linguas_matches_files` field).
+## The 100-language question
 
-## Port catalogue
+Upstream ships 100 `.po` files (`po/LINGUAS`). The port ships none, and has
+no mechanism (no `.pot`, no `msgfmt`/`msgmerge` task, no gettext runtime
+call) by which it ever could without first adding the marker calls this
+report finds absent. This is a single root gap (no i18n infrastructure at
+all), not 100 separate per-language gaps, but its user-facing effect is the
+same as 100 gaps: a user running this port in any locale but English sees
+English, where upstream shows their language if translated.
 
-Zero, in every column:
+## Verdict
 
-```
-messages: 0, occurrences: 0, reused: 0, plural: 0, with_context: 0
-languages: { count: 0, list: [] }
-```
-
-## Why none of the 24 non-code messages can even be ported yet
-
-Per `component-identification.md`, the port has no `.desktop` file, no
-`.metainfo.xml`, and no `.gschema.xml` — none of those three files exist
-anywhere in the port tree, still true after this round's work. So even
-closing every string-literal gap in `lib/` would still leave the
-desktop/metainfo/schema strings with nowhere to live. That is simultaneously
-a translation gap and the component gap `component-parity.md` already names;
-it is tracked once here as the reason those rows cannot move past "gap"
-without component work landing first. The two new `.xml` node definitions
-this round added (`ShellWeatherIntegration.xml`'s and
-`ShellSearchProvider2.xml`'s interface descriptions, now inlined as
-`NODE_XML` heredocs in `lib/shell_integration.rb` and
-`lib/search_provider.rb`) carry no translatable strings on either side —
-D-Bus introspection XML has none — so they do not change this section.
-
-## Closing this
-
-Per the skill's four-line discipline, nothing has been done yet:
-
-1. Upstream's `po/` has not been copied into the port.
-2. No gettext domain has been picked (and `gnome-weather` must be kept —
-   confirming it needs `po/meson.build` or a committed `.pot`, neither of
-   which exists in this fork yet, so it is `unconfirmed`).
-3. No gap row has been transcribed — there is no ledger entry-by-entry
-   table in this report because the generated YAML carries 0 port messages
-   against 49 upstream ones; a 49-row table where every `Port site` cell
-   reads "—" would say nothing a reader does not already get from the
-   summary numbers above.
-4. The census has not found a single port-side message to call `ported`.
-
-## Checks not run
-
-- `msgfmt -c` / `rmsgfmt` validation — moot, there is no `.po` to compile.
-- Running the app under `LANGUAGE=de LC_ALL=de_DE.UTF-8` and asserting a
-  translated string on screen — moot for the same reason, and not attempted.
-
-## Report
-
-**0/49 messages · 0/59 occurrences · 0/87 languages · 0/4,164 strings.**
-`summary.parity: false`. This is not "English-only for now" — the 87
-languages exist today, in the same repository, on `origin/main`, and
-shipping without them is a regression the port introduces by never having
-wired gettext in the first place. Unchanged by this round's component work:
-three new files landed, zero new translation markers landed with them.
+**Not clean.** The port is English-only today, for all 100 languages
+upstream already ships, with zero change across three consecutive audit
+rounds despite substantial feature work landing in each of them. This is
+the single largest, most consistent gap in this fork.
