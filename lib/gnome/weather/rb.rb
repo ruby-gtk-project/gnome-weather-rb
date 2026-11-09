@@ -1,6 +1,6 @@
-# frozen_string_literal: true
+require_relative "rb/version"
 
-require_relative 'rb/version'
+# frozen_string_literal: true
 
 # The gem's version constant lives under this file, which is why
 # spec/spec_helper.rb requires it — the display-free half of the gem's

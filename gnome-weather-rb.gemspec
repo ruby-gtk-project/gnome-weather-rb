@@ -96,50 +96,11 @@ Gem::Specification.new do |spec|
   spec.executables = ["gnome-weather", "gnome-weather-search-provider"]
   spec.require_paths = ["lib"]
 
-  # Runtime dependencies. This gemspec had none at all, which meant
-  # `gem install` produced something that could not load its own toolkit.
-  spec.add_dependency("gtk4", "~> 4.3")
   spec.add_dependency("adwaita", "~> 4.3")
   spec.add_dependency("glib2", "~> 4.3")
-
-  # GWeather supplies the world location database and real forecast data —
-  # see lib/location.rb, which walks its location tree rather than carrying a
-  # hardcoded city list. It is a loader over a typelib, so it also needs that
-  # typelib present at runtime; flake.nix carries it for the dev shell, and a
-  # packaged app needs the distribution's equivalent, which the gem's README
-  # names.
+  spec.add_dependency("gtk4", "~> 4.3")
   spec.add_dependency("libgweather", "~> 1.0")
 
-  # gem_kit was declared here as an explicit runtime dependency, but nothing
-  # under lib/ ever calls GemKit (it is a deprecation DSL -- GemKit::Deprecate
-  # -- and this port has nothing deprecated to mark). It is not dead weight
-  # to drop: libgweather itself depends on gem_kit (see nix/gemset.nix), so
-  # bundler/rubygems installs it anyway as libgweather's own dependency.
-  # Declaring it again here only duplicated that transitive requirement
-  # without this gem ever using its API, so it is removed per the same rule
-  # applied to ashpd below: no call site, no declared dependency.
-
-  # ashpd was declared here for the XDG portals (file chooser, screenshot,
-  # background, location, remote desktop), but checked against both upstream
-  # and the gem itself, neither side has a match:
-  #
-  # - Upstream (src/app/currentLocationController.ts) gets the current
-  #   location from `gi://Geoclue` (GeoClue2's own D-Bus service) called
-  #   directly, not from any xdg-desktop-portal interface; the Flatpak
-  #   manifest (org.gnome.Weather.json) has no portal- or GeoClue-related
-  #   finish-arg either, so there is no location-portal feature here to port.
-  #   Upstream has no file chooser, screenshot, background-portal or
-  #   remote-desktop code anywhere.
-  # - ashpd 0.1.1 (the only release on rubygems) only publishes Account,
-  #   Camera, OpenUri, Screenshot, Settings and Trash — it does not expose a
-  #   Location portal at all, so it could not serve that upstream feature
-  #   even if upstream used the portal for it.
-  #
-  # With no upstream feature on one side and no matching module on the
-  # other, there is nothing for this gem to call. See the current-location
-  # gap tracked instead against `geoclue` (GeoClue2's own GI binding, which
-  # is what upstream actually calls) rather than against ashpd.
-  #
   # NOTE: It is preferable to list development dependencies in the gemspec due to increased
   #       visibility and discoverability.
   #       However, development dependencies in gemspec will install on
